@@ -1,24 +1,28 @@
 global:
   name: consul
+  domain: consul
   enabled: true
   datacenter: tz-dc
   tls:
     enabled: false
     httpsOnly: false
   metrics:
-    enabled: true
-    enableAgentMetrics: true
+    enabled: false
+    enableAgentMetrics: false
   scrape_interval:  5s
   scrape_timeout: 3s
 
 server:
   replicas: 1
   bootstrapExpect: 1
-  storageClass: gp2
+  storageClass: gp3
   storage: 50Gi
-  disruptionBudget:
-    enabled: true
-    maxUnavailable: 0
+#  securityContext:
+#    runAsNonRoot: false
+#    runAsUser: 0
+#  disruptionBudget:
+#    enabled: true
+#    maxUnavailable: 0
   service:
     enabled: true
   resources:
@@ -28,19 +32,20 @@ server:
     limits:
       memory: "3Gi"
       cpu: "2"
-  nodeSelector: |
-    team: devops
-    environment: consul
-  imagePullSecrets:
-    - name: "tz-registrykey"
+#  nodeSelector: |
+#    team: devops
+#    environment: consul
   extraConfig: |
     {
       "enable_central_service_config": false,
+      "telemetry": {
+        "prometheus_retention_time": "30s"
+      },
       "ui_config": {
         "enabled": true,
         "metrics_provider": "prometheus",
         "metrics_proxy": {
-          "base_url": "http://prometheus-server"
+          "base_url": "http://prometheus-server.monitor.svc.cluster.local"
         }
       }
     }
@@ -57,22 +62,29 @@ ui:
     type: 'ClusterIP'
 
 connectInject:
-  enabled: true
+  enabled: false
   default: false
+  logLevel: debug
   metrics:
-    defaultEnableMerging: true
-#  centralConfig:
-#    enabled: false
+    defaultEnableMerging: false
 
 # Enable CRD Controller
 controller:
   enabled: true
+#  enabled: "-"
 
 prometheus:
-  enabled: true
+  enabled: false
 
 client:
   enabled: true
   extraConfig: |
     {"enable_central_service_config": false}
 
+dns:
+  enabled: true
+  type: ClusterIP
+  clusterIP: 172.20.39.237
+
+syncCatalog:
+  enabled: true

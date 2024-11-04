@@ -146,6 +146,7 @@ configurationFiles:
     [mysql]
     default-character-set=utf8mb4
     [mysqld]
+    bind-address = 0.0.0.0
     max_connections = 2000
     secure_file_priv=''
     max_allowed_packet=2G
@@ -210,6 +211,7 @@ service:
   port: 3306
   # nodePort: 32000
   # loadBalancerIP:
+#  loadBalancerSourceRanges: ${allowed_management_cidr_blocks}
 
 ## Pods Service Account
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
@@ -244,7 +246,7 @@ ssl:
 ##
 ## Default: nil (mysql will use image's default timezone, normally UTC)
 ## Example: 'Australia/Sydney'
-# timezone:
+timezone: 'Asia/Seoul'
 
 # Deployment Annotations
 deploymentAnnotations: {}

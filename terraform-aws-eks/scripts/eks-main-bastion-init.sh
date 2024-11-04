@@ -32,24 +32,12 @@ echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/
 sudo apt-get update
 sudo apt-get install -y kubectl
 
-wget https://releases.hashicorp.com/consul/1.8.4/consul_1.8.4_linux_amd64.zip
-unzip consul_1.8.4_linux_amd64.zip
-rm -Rf consul_1.8.4_linux_amd64.zip
-sudo mv consul /usr/local/bin/
-
 wget https://releases.hashicorp.com/vault/1.3.1/vault_1.3.1_linux_amd64.zip
 unzip vault_1.3.1_linux_amd64.zip
 rm -Rf vault_1.3.1_linux_amd64.zip
 sudo mv vault /usr/local/bin/
 vault -autocomplete-install
 complete -C /usr/local/bin/vault vault
-
-sudo apt-get update && sudo apt-get install mysql-client -y
-
-bash /home/ubuntu/resources/ebs.sh
-mv /home/ubuntu/resources/a.zip /opt/bastion
-cd /opt/bastion
-tar xvfz a.zip | grep *.cvs | xargs -n1 -i mv {} a.cvs
 
 exit 0
 

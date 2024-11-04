@@ -1,11 +1,11 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: nexus-ingress
   annotations:
 #    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      X-Forwarded-Host: nexus.eks_project.tzcorp.com;
+      X-Forwarded-Host: nexus.eks_project.topzone.me;
 spec:
 #  tls:
 #    - hosts:
@@ -22,10 +22,13 @@ spec:
 #            name: wordpress
 #            port:
 #              number: 30085
-  - host: ae06c8888b6ff49bb8b181496593edba-196345690.us-west-1.elb.amazonaws.com
+  - host: ae06c8888b6ff49bb8b181496593edba-196345690.ap-northeast-2.elb.amazonaws.com
     http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: nexus
-          servicePort: 32169
+          service:
+            name: nexus
+            port:
+              number: 32169

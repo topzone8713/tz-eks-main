@@ -164,7 +164,7 @@ data "aws_iam_policy_document" "cluster_elb_sl_role_creation" {
 
 resource "aws_iam_policy" "cluster_elb_sl_role_creation" {
   count       = var.manage_cluster_iam_resources && var.create_eks ? 1 : 0
-  name_prefix = "${var.cluster_name}-elb-sl-role-creation"
+  name_prefix = "${var.cluster_name}-elb-tz-role-creation"
   description = "Permissions for EKS to create AWSServiceRoleForElasticLoadBalancing service-linked role"
   policy      = data.aws_iam_policy_document.cluster_elb_sl_role_creation[0].json
   path        = var.iam_path

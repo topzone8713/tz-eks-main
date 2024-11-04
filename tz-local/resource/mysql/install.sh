@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 
-#bash /vagrant/tz-local/resource/mysql/install.sh
-cd /vagrant/tz-local/resource/mysql
+source /root/.bashrc
+function prop { key="${2}=" file="/root/.aws/${1}" rslt=$(grep "${3:-}" "$file" -A 10 | grep "$key" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'); [[ -z "$rslt" ]] && key="${2} = " && rslt=$(grep "${3:-}" "$file" -A 10 | grep "$key" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'); echo "$rslt"; }
+#bash /topzone/tz-local/resource/mysql/install.sh
+cd /topzone/tz-local/resource/mysql
 
 #set -x
 shopt -s expand_aliases
 alias k='kubectl --kubeconfig ~/.kube/config'
 
-function prop {
-	grep "${2}" "/home/vagrant/.aws/${1}" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'
-}
 eks_project=$(prop 'project' 'project')
 NS=devops-dev
 
@@ -17,23 +16,34 @@ k apply -f storageclass.yaml -n ${NS}
 
 helm repo add stable https://charts.helm.sh/stable
 helm repo update
-helm uninstall mysql -n ${NS}
-helm upgrade --install --reuse-values mysql stable/mysql -n ${NS} -f values.yaml
+helm uninstall devops-mysql -n ${NS}
 
-#k patch deployment/mysql -p '{"spec": {"template": {"spec": {"nodeSelector": {"team": "devops"}}}}}' -n ${NS}
-#k patch deployment/mysql -p '{"spec": {"template": {"spec": {"nodeSelector": {"environment": "dev"}}}}}' -n ${NS}
+pushd `pwd`
+cd /topzone/terraform-aws-eks/workspace/base
+allowed_management_cidr_blocks=$(terraform output allowed_management_cidr_blocks)
+allowed_management_cidr_blocks=`echo ${allowed_management_cidr_blocks} | sed "s|, ]| ]|g" | tr "\n" " "`
+popd
+echo ${allowed_management_cidr_blocks}
+cp values.yaml values.yaml_bak
+export allowed_management_cidr_blocks=${allowed_management_cidr_blocks}
+envsubst < "values.yaml" > "values.yaml_bak"
+
+#--reuse-values
+helm upgrade --install devops-mysql stable/mysql -n ${NS} -f values.yaml
+#k patch svc devops-mysql -n ${NS} -p '{"spec": {"type": "LoadBalancer", "loadBalancerSourceRanges": [ "10.20.0.0/16",  ]}}'
+
 sleep 240
 
-MYSQL_ROOT_PASSWORD=$(kubectl get secret --namespace ${NS} mysql -o jsonpath="{.data.mysql-root-password}" | base64 --decode; echo)
+MYSQL_ROOT_PASSWORD=$(kubectl get secret --namespace ${NS} devops-mysql -o jsonpath="{.data.mysql-root-password}" | base64 --decode; echo)
 echo $MYSQL_ROOT_PASSWORD
 
-#k patch svc mysql -n ${NS} -p '{"spec": {"type": "LoadBalancer"}}'
+#k patch svc devops-mysql -n ${NS} -p '{"spec": {"type": "LoadBalancer"}}'
 #kubectl -n ${NS} port-forward svc/mysql 3306
 
-#MYSQL_HOST=localhost
-MYSQL_HOST=$(kubectl get svc mysql -n ${NS} | tail -n 1 | awk '{print $4}')
+MYSQL_HOST=$(kubectl get svc devops-mysql -n ${NS} | tail -n 1 | awk '{print $4}')
 echo ${MYSQL_HOST}
 MYSQL_PORT=3306
+MYSQL_ROOT_PASSWORD=oIjrdhfHaT
 
 sudo apt-get update && sudo apt-get install mysql-client -y
 mysql -h ${MYSQL_HOST} -P ${MYSQL_PORT} --user=root -p${MYSQL_ROOT_PASSWORD} -e "CREATE database test_db;"

@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
-#bash /vagrant/tz-local/resource/monitoring/backup.sh
-cd /vagrant/tz-local/resource/monitoring
+source /root/.bashrc
+function prop { key="${2}=" file="/root/.aws/${1}" rslt=$(grep "${3:-}" "$file" -A 10 | grep "$key" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'); [[ -z "$rslt" ]] && key="${2} = " && rslt=$(grep "${3:-}" "$file" -A 10 | grep "$key" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'); echo "$rslt"; }
+#bash /topzone/tz-local/resource/monitoring/backup.sh
+cd /topzone/tz-local/resource/monitoring
 
-function prop {
-	grep "${2}" "/home/vagrant/.aws/${1}" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'
-}
 eks_project=$(prop 'project' 'project')
 eks_domain=$(prop 'project' 'domain')
 admin_password=$(prop 'project' 'admin_password')
@@ -20,7 +19,7 @@ cp -Rf grafanaSettings.json grafana-backup-tool/grafana_backup/conf
 
 cd grafana-backup-tool
 pip install --user virtualenv
-export PATH=$PATH:/home/vagrant/.local/bin
+export PATH=$PATH:/home/topzone/.local/bin
 virtualenv --python=python3.8 .venv
 source .venv/bin/activate
 pip install .

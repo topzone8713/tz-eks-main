@@ -1,10 +1,7 @@
 #https://aws.amazon.com/ko/premiumsupport/knowledge-center/eks-persistent-storage/
 
-cd /vagrant/tz-local/resource/mysql
+cd /topzone/tz-local/resource/mysql
 
-function prop {
-	grep "${2}" "/home/vagrant/.aws/${1}" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'
-}
 AWS_REGION=$(prop 'config' 'region')
 eks_project=$(prop 'project' 'project')
 aws_account_id=$(aws sts get-caller-identity --query Account --output text)
@@ -88,7 +85,7 @@ sed -i "s/SUBNET_ID/${SUBNET_ID}/g" claim.yaml_bak
 sed -i "s/VOLUME_ID/${NEW_VOLUME_ID}/g" claim.yaml_bak
 
 k get deployment mysql -n ${NS} -o json \
-    | jq '.spec.template.spec.volumes[2].persistentVolumeClaim.claimName = "tmp"' \
+    | jq '.spec.template.spec.volumes[0].persistentVolumeClaim.claimName = "tmp"' \
     | kubectl replace -f -
 
 kubectl delete -f claim.yaml_bak -R -n ${NS}

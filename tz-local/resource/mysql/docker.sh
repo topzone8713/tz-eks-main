@@ -1,23 +1,23 @@
 #https://aws.amazon.com/ko/premiumsupport/knowledge-center/eks-persistent-storage/
 
-cd /vagrant/tz-local/resource/mysql
+cd /topzone/tz-local/resource/mysql
 
-function prop {
-	grep "${2}" "/home/vagrant/.aws/${1}" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'
-}
 aws_access_key_id=$(prop 'credentials' 'aws_access_key_id')
 aws_secret_access_key=$(prop 'credentials' 'aws_secret_access_key')
 AWS_REGION=$(prop 'config' 'region')
 eks_project=$(prop 'project' 'project')
 eks_domain=$(prop 'project' 'domain')
 VAULT_TOKEN=$(prop 'project' 'vault')
+dockerhub_id=$(prop 'project' 'dockerhub_id')
+dockerhub_password=$(prop 'project' 'dockerhub_password')
+docker_url=$(prop 'project' 'docker_url')
 
 aws_account_id=$(aws sts get-caller-identity --query Account --output text)
 NS=devops-dev
 
 sudo apt-get -y install docker.io
-sudo usermod -G docker vagrant
-sudo chown -Rf vagrant:vagrant /var/run/docker.sock
+sudo usermod -G docker topzone
+sudo chown -Rf topzone:topzone /var/run/docker.sock
 
 SNAPSHOT_IMG=tz-mysql-snapshot
 TAG=11
@@ -26,7 +26,8 @@ aws ecr create-repository \
     --repository-name $SNAPSHOT_IMG \
     --image-tag-mutability IMMUTABLE
 
-docker login --username AWS -p $(aws ecr get-login-password --region ${AWS_REGION}) ${aws_account_id}.dkr.ecr.${AWS_REGION}.amazonaws.com/
+#docker login --username AWS -p $(aws ecr get-login-password --region ${AWS_REGION}) ${aws_account_id}.dkr.ecr.${AWS_REGION}.amazonaws.com/
+echo $dockerhub_password | docker login -u $dockerhub_id --password-stdin ${docker_url}
 DOCKER_ID=${aws_account_id}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
 docker image build -t ${SNAPSHOT_IMG} .

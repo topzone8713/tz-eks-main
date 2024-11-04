@@ -1,4 +1,4 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress-alertmanager
@@ -17,15 +17,18 @@ spec:
 #      paths:
 #      - path: /
 #        backend:
-#          serviceName: prometheus-kube-prometheus-alertmanager
+#          serviceName: prometheus-alertmanager
 #          servicePort: 9093
   - host: alertmanager.default.eks_project.eks_domain
     http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: prometheus-kube-prometheus-alertmanager
-          servicePort: 9093
+          service:
+            name: alertmanager-operated
+            port:
+              number: 9093
   tls:
     - hosts:
 #        - alertmanager.eks_domain

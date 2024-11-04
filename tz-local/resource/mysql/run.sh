@@ -7,8 +7,8 @@ echo "--------------VOLUME_ID: ${VOLUME_ID}" >> /app/aaa
 
 mkdir -p /vault/secrets
 #echo "
-#AWS_ACCESS_KEY_ID=AKIATEMCRY56PRC54QIQ
-#AWS_SECRET_ACCESS_KEY=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
+#AWS_ACCESS_KEY_ID=xxxx
+#AWS_SECRET_ACCESS_KEY=xxxxx
 #AWS_DEFAULT_REGION=ap-northeast-2
 #" > /vault/secrets/aws
 

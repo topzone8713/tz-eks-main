@@ -6,106 +6,121 @@
 #https://grafana.com/docs/grafana/latest/datasources/cloudwatch/
 #https://prometheus.io/docs/instrumenting/exporters/#http
 
-#bash /vagrant/tz-local/resource/monitoring/install.sh
-cd /vagrant/tz-local/resource/monitoring
+source /root/.bashrc
+function prop { key="${2}=" file="/root/.aws/${1}" rslt=$(grep "${3:-}" "$file" -A 10 | grep "$key" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'); [[ -z "$rslt" ]] && key="${2} = " && rslt=$(grep "${3:-}" "$file" -A 10 | grep "$key" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'); echo "$rslt"; }
+#bash /topzone/tz-local/resource/monitoring/install.sh
+cd /topzone/tz-local/resource/monitoring
 
 #set -x
 shopt -s expand_aliases
 alias k='kubectl --kubeconfig ~/.kube/config'
 
-function prop {
-  if [[ "${3}" == "" ]]; then
-    grep "${2}" "/home/vagrant/.aws/${1}" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'
-  else
-    grep "${3}" "/home/vagrant/.aws/${1}" -A 10 | grep "${2}" | head -n 1 | tail -n 1 | cut -d '=' -f2 | sed 's/ //g'
-  fi
-}
 eks_project=$(prop 'project' 'project')
 eks_domain=$(prop 'project' 'domain')
 admin_password=$(prop 'project' 'admin_password')
 basic_password=$(prop 'project' 'basic_password')
-STACK_VERSION=16.6.0
-
+grafana_goauth2_client_id=$(prop 'project' 'grafana_goauth2_client_id')
+grafana_goauth2_client_secret=$(prop 'project' 'grafana_goauth2_client_secret')
+aws_access_key_id=$(prop 'credentials' 'aws_access_key_id')
+AWS_REGION=$(prop 'config' 'region')
+aws_secret_access_key=$(prop 'credentials' 'aws_secret_access_key')
+smtp_password=$(prop 'project' 'smtp_password')
+STACK_VERSION=44.3.0
+#STACK_VERSION=54.0.1
 NS=monitoring
 
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#helm repo add grafana https://grafana.github.io/helm-charts
+#helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#helm show chart prometheus-community/kube-prometheus-stack
 
-helm uninstall prometheus -n ${NS}
-k delete ns ${NS}
+#k delete ns ${NS}
 k create ns ${NS}
 #helm inspect values prometheus-community/kube-prometheus-stack > kube-prometheus-stack-values.yaml
 
-kubectl -n ${NS} apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml && \
-kubectl -n ${NS} apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml && \
-kubectl -n ${NS} apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml && \
-kubectl -n ${NS} apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml && \
-kubectl -n ${NS} apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml && \
-kubectl -n ${NS} apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml && \
-kubectl -n ${NS} apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
+#kubectl -n ${NS} delete -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml && \
+#kubectl -n ${NS} delete -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml && \
+#kubectl -n ${NS} delete -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml && \
+#kubectl -n ${NS} delete -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml && \
+#kubectl -n ${NS} delete -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml && \
+#kubectl -n ${NS} delete -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml && \
+#kubectl -n ${NS} delete -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.45.0/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
 
 cp -Rf values.yaml values.yaml_bak
 sed -i "s/admin_password/${admin_password}/g" values.yaml_bak
 sed -i "s/eks_project/${eks_project}/g" values.yaml_bak
 sed -i "s/eks_domain/${eks_domain}/g" values.yaml_bak
+sed -i "s/smtp_password/${smtp_password}/g" values.yaml_bak
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
+#helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
+#helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
-helm search repo prometheus-community
-helm search repo kube-state-metrics
-helm upgrade --debug --install --reuse-values prometheus prometheus-community/kube-prometheus-stack \
-    -n ${NS} -f values.yaml_bak \
+#helm search repo prometheus-community
+#helm search repo kube-state-metrics
+#helm uninstall prometheus -n ${NS}
+#helm fetch --untar prometheus-community/kube-prometheus-stack
+#--reuse-values
+helm upgrade --debug --install prometheus prometheus-community/kube-prometheus-stack \
+    -n ${NS} \
     --version ${STACK_VERSION} \
-    --set alertmanager.persistentVolume.storageClass="gp2" \
-    --set server.persistentVolume.storageClass="gp2"
+    --set alertmanager.persistentVolume.storageClass="gp3" \
+    --set server.persistentVolume.storageClass="gp3"
+#--reuse-values
+helm upgrade --debug --install --reuse-values prometheus prometheus-community/kube-prometheus-stack \
+    -n ${NS} \
+    --version ${STACK_VERSION} \
+    -f values.yaml_bak \
+    --set alertmanager.baseURL=https://alertmanager.default.${eks_project}.${eks_domain}
 
-k patch deployment/prometheus-kube-state-metrics -p '{"spec": {"template": {"spec": {"nodeSelector": {"team": "devops"}}}}}' -n ${NS}
-k patch deployment/prometheus-kube-state-metrics -p '{"spec": {"template": {"spec": {"nodeSelector": {"environment": "prod"}}}}}' -n ${NS}
-k patch deployment/prometheus-kube-state-metrics -p '{"spec": {"template": {"spec": {"imagePullSecrets": [{"name": "tz-registrykey"}]}}}}' -n ${NS}
-
-helm upgrade --debug --install --reuse-values alertmanager-prometheus-kube-prometheus-alertmanager prometheus-community/alertmanager \
-  -n ${NS} \
-  --set alertmanager.persistentVolume.storageClass="gp2" \
-  --set nodeSelector.team=devops \
-  --set nodeSelector.environment=prod
+#k patch deployment/prometheus-kube-state-metrics -p '{"spec": {"template": {"spec": {"nodeSelector": {"team": "devops"}}}}}' -n ${NS}
+#k patch deployment/prometheus-kube-state-metrics -p '{"spec": {"template": {"spec": {"nodeSelector": {"environment": "monitoring"}}}}}' -n ${NS}
+k patch deployment/prometheus-kube-state-metrics -p '{"spec": {"template": {"spec": {"imagePullSecrets": [{"name": "registry-creds"}]}}}}' -n ${NS}
 
 helm uninstall tz-blackbox-exporter -n ${NS}
-helm upgrade --debug --install --reuse-values -n ${NS} tz-blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
-  --set nodeSelector.team=devops \
-  --set nodeSelector.environment=prod
+#--reuse-values
+helm upgrade --debug --install -n ${NS} tz-blackbox-exporter prometheus-community/prometheus-blackbox-exporter
+#  --set nodeSelector.team=devops \
+#  --set nodeSelector.environment=${NS}
 
-#kubectl rollout restart statefulset.apps/alertmanager-nws-prometheus-stack-kube-alertmanager
-
-helm repo add loki https://grafana.github.io/loki/charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+#helm search repo loki
 helm uninstall loki -n ${NS}
-helm upgrade --install --reuse-values loki loki/loki-stack \
+
+sed -i "s/AWS_REGION/${AWS_REGION}/g" values.yaml_bak
+sed -i "s/aws_access_key_id/${aws_access_key_id}/g" values.yaml_bak
+sed -i "s/aws_secret_access_key/${aws_secret_access_key}/g" values.yaml_bak
+sed -i "s/eks_project/${eks_project}/g" values.yaml_bak
+#helm show chart grafana/loki-stack
+#--reuse-values
+#2.9.9
+helm upgrade --install loki grafana/loki-stack --version 2.9.11 \
   -n ${NS} \
   --set persistence.enabled=true,persistence.type=pvc,persistence.size=10Gi
-k patch statefulset/loki -p '{"spec": {"template": {"spec": {"nodeSelector": {"team": "devops"}}}}}' -n ${NS}
-k patch statefulset/loki -p '{"spec": {"template": {"spec": {"nodeSelector": {"environment": "prod"}}}}}' -n ${NS}
-k patch statefulset/loki -p '{"spec": {"template": {"spec": {"imagePullSecrets": [{"name": "tz-registrykey"}]}}}}' -n ${NS}
+#k patch statefulset/loki -p '{"spec": {"template": {"spec": {"nodeSelector": {"team": "devops"}}}}}' -n ${NS}
+#k patch statefulset/loki -p '{"spec": {"template": {"spec": {"nodeSelector": {"environment": "monitoring"}}}}}' -n ${NS}
+k patch statefulset/loki -p '{"spec": {"template": {"spec": {"imagePullSecrets": [{"name": "registry-creds"}]}}}}' -n ${NS}
 
-k patch daemonset/loki-promtail -p '{"spec": {"template": {"spec": {"imagePullSecrets": [{"name": "tz-registrykey"}]}}}}' -n ${NS}
+k patch daemonset/loki-promtail -p '{"spec": {"template": {"spec": {"imagePullSecrets": [{"name": "registry-creds"}]}}}}' -n ${NS}
 # loki datasource: http://loki.monitoring.svc.cluster.local:3100/
+
+bash s3.sh
 
 cp -Rf configmap.yaml configmap.yaml_bak
 sed -i "s/admin_password/${admin_password}/g" configmap.yaml_bak
 sed -i "s/eks_domain/${eks_domain}/g" configmap.yaml_bak
 sed -i "s/eks_project/${eks_project}/g" configmap.yaml_bak
+sed -i "s/grafana_goauth2_client_id/${grafana_goauth2_client_id}/g" configmap.yaml_bak
+sed -i "s/grafana_goauth2_client_secret/${grafana_goauth2_client_secret}/g" configmap.yaml_bak
+sed -i "s/smtp_password/${smtp_password}/g" configmap.yaml_bak
 k -n ${NS} apply -f configmap.yaml_bak
-#curl -X POST http://prometheus.default.${eks_project}.eks_domain/-/reload
+#curl -X POST http://prometheus.default.${eks_project}.${eks_domain}/-/reload
 
-kubectl -n ${NS} get pods | grep prometheus-grafana | awk '{print $1}' | \
-  xargs kubectl -n ${NS} delete pod
-
-k get pv | grep prometheus
-
-# Prometheus
-#k -n ${NS} port-forward svc/prometheus-kube-prometheus-prometheus 9090
-#k -n ${NS} port-forward svc/prometheus-grafana 3000:80
-#k -n ${NS} port-forward svc/loki 3100:3100
-#POD_NAME=$(k -n ${NS} get pods --namespace prometheus -l "app=prometheus,component=alertmanager" -o jsonpath="{.items[0].metadata.name}")
-#k -n ${NS} port-forward $POD_NAME 9093
+#curl http://grafana.default.${eks_project}.${eks_domain}
+#admin / prom-operator
+#grafana_pod=$(kubectl -n ${NS} get pod | grep prometheus-grafana | awk '{print $1}')
+#kubectl exec -it ${grafana_pod} \
+#  -n ${NS} -c grafana grafana-cli admin reset-admin-password ${admin_password}
+#kubectl get csr -o name | xargs kubectl certificate approve
 
 # basic auth
 #https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
@@ -119,6 +134,32 @@ sed -i "s/eks_project/${eks_project}/g" grafana-ingress.yaml_bak
 sed -i "s/eks_domain/${eks_domain}/g" grafana-ingress.yaml_bak
 k delete -f grafana-ingress.yaml_bak -n ${NS}
 k apply -f grafana-ingress.yaml_bak -n ${NS}
+
+kubectl rollout restart deployment/prometheus-grafana -n ${NS}
+kubectl rollout restart deployment/prometheus-kube-prometheus-operator -n ${NS}
+kubectl rollout restart deployment/prometheus-kube-state-metrics -n ${NS}
+kubectl rollout restart statefulset.apps/loki -n ${NS}
+
+cp alertmanager-values.yaml alertmanager-values.yaml_bak
+sed -i "s/eks_project/${eks_project}/g" alertmanager-values.yaml_bak
+sed -i "s/eks_domain/${eks_domain}/g" alertmanager-values.yaml_bak
+sed -i "s/admin_password/${admin_password}/g" alertmanager-values.yaml_bak
+sed -i "s/smtp_password/${smtp_password}/g" alertmanager-values.yaml_bak
+
+alertmanager=$(cat alertmanager-values.yaml_bak | base64 -w0)
+cp alertmanager-secret-k8s.yaml alertmanager-secret-k8s.yaml_bak
+sed -i "s|ALERTMANAGER_ENCODE|${alertmanager}|g" alertmanager-secret-k8s.yaml_bak
+kubectl -n ${NS} apply -f alertmanager-secret-k8s.yaml_bak
+kubectl rollout restart statefulset.apps/alertmanager-prometheus-kube-prometheus-alertmanager -n ${NS}
+
+k get pv | grep prometheus
+
+# Prometheus
+#k -n ${NS} port-forward svc/prometheus-kube-prometheus-prometheus 9090
+#k -n ${NS} port-forward svc/prometheus-grafana 3000:80
+#k -n ${NS} port-forward svc/loki 3100:3100
+#POD_NAME=$(k -n ${NS} get pods --namespace prometheus -l "app=prometheus,component=alertmanager" -o jsonpath="{.items[0].metadata.name}")
+#k -n ${NS} port-forward $POD_NAME 9093
 
 #echo ${basic_password} | htpasswd -i -n admin > auth
 #k delete secret basic-auth-prometheus -n ${NS}
@@ -147,45 +188,73 @@ kubectl describe certificate ingress-grafana-tls -n ${NS}
 kubectl get secrets --all-namespaces | grep ingress-grafana-tls
 kubectl get certificates --all-namespaces | grep ingress-grafana-tls
 
-#curl http://grafana.default.${eks_project}.eks_domain
-#admin / prom-operator
-kubectl get csr -o name | xargs kubectl certificate approve
+sleep 60
+grafana_pod=$(kubectl -n ${NS} get pod | grep prometheus-grafana | awk '{print $1}')
+kubectl exec -it ${grafana_pod} -n ${NS} \
+   -c grafana grafana-cli plugins install grafana-piechart-panel
 
 #helm repo add influxdata https://helm.influxdata.com/
 #helm install influxdb influxdata/influxdb -n ${NS}
 #k patch statefulset/influxdb -p '{"spec": {"template": {"spec": {"nodeSelector": {"team": "devops"}}}}}' -n ${NS}
-#k patch statefulset/influxdb -p '{"spec": {"template": {"spec": {"nodeSelector": {"environment": "prod"}}}}}' -n ${NS}
-#k patch statefulset/influxdb -p '{"spec": {"template": {"spec": {"imagePullSecrets": [{"name": "tz-registrykey"}]}}}}' -n ${NS}
+#k patch statefulset/influxdb -p '{"spec": {"template": {"spec": {"nodeSelector": {"environment": "monitoring"}}}}}' -n ${NS}
+#k patch statefulset/influxdb -p '{"spec": {"template": {"spec": {"imagePullSecrets": [{"name": "registry-creds"}]}}}}' -n ${NS}
 
-#kubectl patch statefulset/alertmanager-prometheus-kube-prometheus-alertmanager -p '{"spec": {"template": {"spec": {"nodeSelector": {"team": "devops"}}}}}' -n ${NS}
-#kubectl patch statefulset/alertmanager-prometheus-kube-prometheus-alertmanager -p '{"spec": {"template": {"spec": {"nodeSelector": {"environment": "prod"}}}}}' -n ${NS}
-#kubectl patch statefulset/alertmanager-prometheus-kube-prometheus-alertmanager -p '{"spec": {"template": {"spec": {"imagePullSecrets": [{"name": "tz-registrykey"}]}}}}' -n ${NS}
+kubectl patch statefulset/alertmanager-prometheus-kube-prometheus-alertmanager -p '{"spec": {"template": {"spec": {"imagePullSecrets": [{"name": "registry-creds"}]}}}}' -n ${NS}
 
+cp -Rf /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
+sed -i "s/eks_project/${eks_project}/g" /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
+sed -i "s/eks_domain/${eks_domain}/g" /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
+sed -i "s/admin_password_var/${admin_password}/g" /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
+sed -i "s/s3_bucket_name_var/devops-grafana-${eks_project}/g" /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
 
-cp -Rf /vagrant/tz-local/resource/monitoring/backup/grafanaSettings.json /vagrant/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
-sed -i "s/eks_project/${eks_project}/g" /vagrant/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
-sed -i "s/eks_domain/${eks_domain}/g" /vagrant/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
-sed -i "s/admin_password_var/${admin_password}/g" /vagrant/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
-sed -i "s/s3_bucket_name_var/devops-grafana-${eks_project}/g" /vagrant/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
-
-grafana_token_var=$(curl -X POST -H "Content-Type: application/json" -d '{"name":"admin-key", "role": "Admin"}' https://admin:${admin_password}@grafana.default.${eks_project}.${eks_domain}/api/auth/keys | jq -r '.key')
+grafana_token_var=$(curl -X POST -H "Content-Type: application/json" -d '{"name":"admin-key", "role": "Admin"}' "http://admin:${admin_password}@grafana.default.${eks_project}.${eks_domain}/api/auth/keys" | jq -r '.key')
+echo ${grafana_token_var}
+sleep 5
 if [[ "${grafana_token_var}" != "" ]]; then
-  sed -i "s/grafana_token_var/${grafana_token_var}/g" /vagrant/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
+  sed -i "s/grafana_token_var/${grafana_token_var}/g" /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
 fi
 
 aws_region=$(prop 'config' 'region' ${eks_project})
 aws_access_key_id=$(prop 'credentials' 'aws_access_key_id' ${eks_project})
 aws_secret_access_key=$(prop 'credentials' 'aws_secret_access_key' ${eks_project})
-sed -i "s/aws_region/${aws_region}/g" /vagrant/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
-sed -i "s/aws_access_key_id/${aws_access_key_id}/g" /vagrant/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
-sed -i "s|aws_secret_access_key|${aws_secret_access_key}|g" /vagrant/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
+sed -i "s/aws_region/${aws_region}/g" /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
+sed -i "s/aws_access_key_id/${aws_access_key_id}/g" /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
+sed -i "s|aws_secret_access_key|${aws_secret_access_key}|g" /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
 
-cat /vagrant/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
+cat /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
+
+#helm repo add fluent https://fluent.github.io/helm-charts
+#helm repo update
+#helm install fluentd fluent/fluentd --version 0.3.9 \
+#  -n ${NS} -f values.yaml_bak
+#
+#fluentd_vaules.yaml
+
+PROJECTS=(KubeSchedulerDown KubeletTooManyPods TargetDown Watchdog InfoInhibitor KubePodNotReady AlertmanagerClusterFailedToSendAlerts AlertmanagerFailedToSendAlerts KubeDaemonSetRolloutStuck)
+for item in "${PROJECTS[@]}"; do
+  if [[ "${item}" != "NAME" ]]; then
+curl https://alertmanager.default.${eks_project}.${eks_domain}/api/v1/silences -d '{
+      "matchers": [
+        {
+          "name": "alertname",
+          "value": "'${item}'"
+        }
+      ],
+      "startsAt": "2023-05-05T22:12:33.533330795Z",
+      "endsAt": "2053-10-25T23:11:44.603Z",
+      "createdBy": "api",
+      "comment": "Silence",
+      "status": {
+        "state": "active"
+      }
+}'
+  fi
+done
 
 exit 0
 
 1. aws datasource setting
-  Data Sources / CloudWatch: http://grafana.default.${eks_project}.eks_domain/datasources/edit/2/
+  Data Sources / CloudWatch: http://grafana.default.${eks_project}.${eks_domain}/datasources/edit/2/
   #  Assess and secret key for "grafana" user
   #  Attach existing policies directly
   #CloudWatchReadOnlyAccess
@@ -197,8 +266,32 @@ rds: 707
 loki: 12019
 k8s-storage-volumes-cluster: 11454
 k8s: 13770
+loki app/log: 13639
 
-#custom prometheus alert
+
+################################################################################
+# custom prometheus alert
+# https://lapee79.github.io/article/monitoring-http-using-blackbox-exporter/
+################################################################################
 #kubectl -n monitoring get prometheusrules prometheus-kube-prometheus-alertmanager.rules -o yaml > prometheus-kube-prometheus-alertmanager.rules.yaml
 kubectl -n monitoring apply -f prometheus-kube-prometheus-alertmanager.rules.yaml
+
+
+
+
+helm repo add deliveryhero https://charts.deliveryhero.io/
+helm repo update
+helm install my-release deliveryhero/k8s-event-logger -f values.yaml
+
+
+sa
+prometheus-kube-prometheus-prometheus
+binding
+prometheus-kube-prometheus-prometheus
+
+
+https://alertmanager.default.${eks_project}.${eks_domain}/#/alerts
+
+#          "value": "Watchdog",
+#          "isRegex": true
 

@@ -1,12 +1,9 @@
 #https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/main/docs/deploy/installation.md
 
-cd /vagrant/tz-local/resource/elb-controller
+cd /topzone/tz-local/resource/elb-controller
 
-# bash /vagrant/tz-local/resource/elb-controller/update.sh tzcorp.com
+# bash /topzone/tz-local/resource/elb-controller/update.sh tzcorp.com
 
-function prop {
-	grep "${2}" "/home/vagrant/.aws/${1}" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'
-}
 AWS_REGION=$(prop 'config' 'region')
 eks_domain=$(prop 'project' 'domain')
 eks_project=$(prop 'project' 'project')
@@ -57,4 +54,10 @@ curl -v http://test1.${eks_domain}
 
 kubectl delete -f test2.yaml_bak
 kubectl delete -f test.yaml
+
+
+
+
+
+
 

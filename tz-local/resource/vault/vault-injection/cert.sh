@@ -3,8 +3,9 @@
 #https://github.com/hashicorp/vault-helm/issues/243
 #https://www.vaultproject.io/docs/platform/k8s/helm/devops-devs/standalone-tls
 
-#bash /vagrant/tz-local/resource/vault/vault-injection/cert.sh mobile
-cd /vagrant/tz-local/resource/vault/vault-injection
+source /root/.bashrc
+#bash /topzone/tz-local/resource/vault/vault-injection/cert.sh mobile
+cd /topzone/tz-local/resource/vault/vault-injection
 
 if [[ "$1" == "" ]]; then
   NAMESPACE=vault
@@ -56,7 +57,7 @@ openssl req -config ${TMPDIR}/${BASENAME}-csr.conf -new -key ${TMPDIR}/${BASENAM
 
 # Create a file ${TMPDIR}/${BASENAME}.yaml with the following contents
 cat <<EOF >${TMPDIR}/${BASENAME}-csr.yaml
-apiVersion: certificates.k8s.io/v1beta1
+apiVersion: certificates.k8s.io/v1
 kind: CertificateSigningRequest
 metadata:
   name: ${CSR_NAME}
@@ -64,6 +65,7 @@ spec:
   groups:
   - system:authenticated
   request: $(cat ${TMPDIR}/${BASENAME}.csr | base64 | tr -d '\n')
+  signerName: kubernetes.io/kube-apiserver-client
   usages:
   - digital signature
   - key encipherment
@@ -89,6 +91,7 @@ kubectl certificate approve ${CSR_NAME} --namespace ${NAMESPACE}
 # Retrieve the certificate.
 ## If this process is automated, you may need to wait to ensure the certificate has been created. If it hasn't, this will return an empty string.
 serverCert=$(kubectl get csr ${CSR_NAME} -o jsonpath='{.status.certificate}')
+kubectl describe csr ${CSR_NAME}
 
 # Write the certificate out to the CRT file
 echo "${serverCert}" | openssl base64 -d -A -out ${TMPDIR}/${BASENAME}.crt
@@ -110,4 +113,3 @@ kubectl create secret generic ${SECRET_NAME} \
 
 # Verify the certificate:
 openssl x509 -in ${TMPDIR}/${BASENAME}.crt -noout -text
-

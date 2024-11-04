@@ -18,7 +18,7 @@ metadata:
 spec:
   containers:
   - name: bastion
-    image: ubuntu:18.04
+    image: ubuntu:20.04
     command: ["/bin/sh"]
     args: ["-c", "while true; do echo $(date -u) >> /data/out.txt; sleep 5; done"]
     volumeMounts:
@@ -28,6 +28,6 @@ spec:
   - name: persistent-storage
     persistentVolumeClaim:
       claimName: bastion-pvc
-  nodeSelector:
-    team: devops
-    environment: dev
+#  nodeSelector:
+#    team: devops
+#    environment: dev
