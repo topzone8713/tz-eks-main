@@ -46,6 +46,7 @@ fi
 # bash bootstrap.sh
 #docker exec -it ${DOCKER_NAME} bash
 bash tz-local/docker/install.sh
+echo docker exec -it ${DOCKER_NAME} bash /topzone/tz-local/docker/init2.sh
 docker exec -it ${DOCKER_NAME} bash /topzone/tz-local/docker/init2.sh
 
 exit 0

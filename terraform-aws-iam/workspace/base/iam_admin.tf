@@ -49,14 +49,14 @@ resource "aws_iam_role" "k8sAdmin" {
   })
 }
 resource "aws_iam_user_policy_attachment" "k8sAdmin" {
-  user       = "doohee@gmail.com"
+  user       = "devops1@gmail.com"
   policy_arn = aws_iam_policy.k8sAdmin.arn
 }
 resource "aws_iam_group_membership" "k8sAdmin" {
   name = "${local.cluster_name}-k8sAdmin"
   users = [
     "${local.cluster_name}-k8sAdmin",
-    "doohee@gmail.com"
+    "devops1@gmail.com"
   ]
   group = aws_iam_group.k8sAdmin.name
 }

@@ -11,13 +11,13 @@ terraform {
     }
   }
 
-  backend "s3" {
-    region  = "ap-northeast-2"
-    bucket  = "terraform-state-topzone-k8s-001"
-    key     = "terraform.tfstate"
-    encrypt        = true
-    dynamodb_table = "terraform-topzone-k8s-lock-001"
-  }
+#   backend "s3" {
+#     region  = "ap-northeast-2"
+#     bucket  = "terraform-state-topzone-k8s-001"
+#     key     = "terraform.tfstate"
+#     encrypt        = true
+#     dynamodb_table = "terraform-topzone-k8s-lock-001"
+#   }
 }
 resource "aws_s3_bucket" "tfstate" {
   bucket = "terraform-state-${local.cluster_name}-001"

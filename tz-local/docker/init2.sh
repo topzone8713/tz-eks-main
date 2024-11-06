@@ -31,6 +31,7 @@ cp -Rf /topzone/resources/${eks_project} ${PROJECT_BASE2}
 cp -Rf /topzone/resources/${eks_project}.pub ${PROJECT_BASE2}
 cp -Rf /topzone/resources/kubeconfig_${eks_project} ${PROJECT_BASE2}
 cp -Rf /topzone/resources/.auto.tfvars ${PROJECT_BASE2}
+echo "===== PROJECT_BASE2: ${PROJECT_BASE2}"
 cd ${PROJECT_BASE2}
 if [ ! -d "${PROJECT_BASE2}/.terraform" ]; then
   terraform init
@@ -44,6 +45,7 @@ cp -Rf /topzone/resources/${eks_project} ${PROJECT_BASE}
 cp -Rf /topzone/resources/${eks_project}.pub ${PROJECT_BASE}
 cp -Rf /topzone/resources/kubeconfig_${eks_project} ${PROJECT_BASE}
 cp -Rf /topzone/resources/.auto.tfvars ${PROJECT_BASE}
+echo "===== PROJECT_BASE: ${PROJECT_BASE}"
 cd ${PROJECT_BASE}
 if [ ! -d "${PROJECT_BASE}/.terraform" ]; then
   rm -Rf ${eks_project}*
