@@ -6,12 +6,17 @@ provider "aws" {
 # EKS Module
 ################################################################################
 
+#  terraform import aws_eks_identity_provider_config.eks_provider_config topzone-k8s:sts
 # resource "aws_eks_identity_provider_config" "eks_provider_config" {
-#   cluster_name = local.name
+#   cluster_name = "topzone-k8s" # local.name
 #   oidc {
 #     client_id                     = "sts.amazonaws.com"
 #     identity_provider_config_name = "sts"
 #     issuer_url                    = module.eks.cluster_oidc_issuer_url
+#   }
+#   tags = {
+#     "application" = "topzone-k8s"
+#     "environment" = "prod"
 #   }
 # }
 
@@ -25,6 +30,7 @@ provider "aws" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
+  version = "~> 20.0"
 
   cluster_name                    = local.name
   cluster_version                 = "1.29"
