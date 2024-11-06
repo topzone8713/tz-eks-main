@@ -208,7 +208,7 @@ sed -i "s/admin_password_var/${admin_password}/g" /topzone/tz-local/resource/mon
 sed -i "s/s3_bucket_name_var/devops-grafana-${eks_project}/g" /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
 
 grafana_token_var=$(curl -X POST -H "Content-Type: application/json" -d '{"name":"admin-key", "role": "Admin"}' "http://admin:${admin_password}@grafana.default.${eks_project}.${eks_domain}/api/auth/keys" | jq -r '.key')
-echo ${grafana_token_var}
+echo ${grafana_token_var} #
 sleep 5
 if [[ "${grafana_token_var}" != "" ]]; then
   sed -i "s/grafana_token_var/${grafana_token_var}/g" /topzone/tz-local/resource/monitoring/backup/grafanaSettings.json_bak
