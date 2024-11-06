@@ -32,3 +32,4 @@ unseal2.txt
 myoutput.txt
 cert
 *.zip
+/terraform-aws-eks/workspace/base/lb2.tf
