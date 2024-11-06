@@ -29,6 +29,7 @@ echo "aws_account_id: ${aws_account_id}"
 echo "
 export AWS_DEFAULT_REGION=${aws_region}
 export VAULT_ADDR=https://vault.${eks_domain}
+export KUBE_CONFIG_PATH='~/.kube/config'
 alias k='kubectl'
 alias KUBECONFIG='~/.kube/config'
 alias base='cd /topzone/terraform-aws-eks/workspace/base'
@@ -172,5 +173,5 @@ docker push ${dockerhub_id}/${SNAPSHOT_IMG}:${TAG}
 #docker tag ${DOCKER_URL}/${SNAPSHOT_IMG}:${TAG} ${DOCKER_URL}/devops-utils2:latest
 #docker push ${DOCKER_URL}/devops-utils2:latest
 
-docker tag ${SNAPSHOT_IMG}:latest doohee323/${SNAPSHOT_IMG}:${TAG}
-docker push doohee323/${SNAPSHOT_IMG}:${TAG}
+docker tag ${SNAPSHOT_IMG}:latest topzone8713/${SNAPSHOT_IMG}:${TAG}
+docker push topzone8713/${SNAPSHOT_IMG}:${TAG}

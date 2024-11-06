@@ -51,7 +51,7 @@ docker exec -it ${DOCKER_NAME} bash /topzone/tz-local/docker/init2.sh
 exit 0
 
 # install in docker
-export docker_user="doohee323"
+export docker_user="topzone8713"
 bash /topzone/tz-local/docker/init2.sh
 
 # remove all resources
