@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export MSYS_NO_PATHCONV=1
 export tz_project=devops-utils
 
 function cleanTfFiles() {
