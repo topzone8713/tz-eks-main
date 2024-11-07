@@ -13,8 +13,8 @@ eks_domain=$(prop 'project' 'domain')
 admin_password=$(prop 'project' 'admin_password')
 argocd_google_client_id=$(prop 'project' 'argocd_google_client_id')
 argocd_google_client_secret=$(prop 'project' 'argocd_google_client_secret')
-git_id=$(prop 'project' 'git_id')
-git_token=$(prop 'project' 'git_token')
+github_id=$(prop 'project' 'github_id')
+github_token=$(prop 'project' 'github_token')
 
 alias k='kubectl --kubeconfig ~/.kube/config'
 
@@ -51,8 +51,8 @@ for item in "${PROJECTS[@]}"; do
       argocd proj create ${project} \
         -d https://kubernetes.default.svc,${project} \
         -d https://kubernetes.default.svc,argocd \
-        -s https://github.com/${git_id}/tz-argocd-repo.git \
-        -s https://${git_id}.github.io/tz-argocd-repo/ \
+        -s https://github.com/${github_id}/tz-argocd-repo.git \
+        -s https://${github_id}.github.io/tz-argocd-repo/ \
         --upsert
       echo "  accounts.${project}: apiKey, login" >> argocd-cm.yaml_bak
       echo "    p, role:${project}, applications, sync, ${project}/*, allow" >> argocd-rbac-cm.yaml_bak
@@ -63,8 +63,8 @@ for item in "${PROJECTS[@]}"; do
         -d https://kubernetes.default.svc,${project} \
         -d https://kubernetes.default.svc,${item}-dev \
         -d https://kubernetes.default.svc,argocd \
-        -s https://github.com/${git_id}/tz-argocd-repo.git \
-        -s https://${git_id}.github.io/tz-argocd-repo/ \
+        -s https://github.com/${github_id}/tz-argocd-repo.git \
+        -s https://${github_id}.github.io/tz-argocd-repo/ \
         --upsert
       echo "  accounts.${project}-admin: apiKey, login" >> argocd-cm.yaml_bak
       echo "    p, role:${project}-admin, *, *, ${project}/*, allow" >> argocd-rbac-cm.yaml_bak
@@ -105,8 +105,8 @@ BRANCH=main
 argocd proj create ${PROJ} \
         -d https://kubernetes.default.svc,${PROJ} \
         -d https://kubernetes.default.svc,${PROJ}-dev \
-        -s https://github.com/${git_id}/tz-argocd-repo.git \
-        -s https://${git_id}.github.io/tz-argocd-repo/
+        -s https://github.com/${github_id}/tz-argocd-repo.git \
+        -s https://${github_id}.github.io/tz-argocd-repo/
 #        -d https://kubernetes.default.svc,argocd \
 
 argocd proj role delete ${PROJ} $ROLE
@@ -142,7 +142,7 @@ argocd app delete ${APP} -y
 if [[ "${STAGE}" == "prod" ]]; then
   argocd app create ${APP} \
     --project devops \
-    --repo https://github.com/${git_id}/tz-argocd-repo.git \
+    --repo https://github.com/${github_id}/tz-argocd-repo.git \
     --path ${APP}/${STAGE} \
     --dest-namespace ${PROJ} \
     --dest-server https://kubernetes.default.svc \
@@ -153,7 +153,7 @@ if [[ "${STAGE}" == "prod" ]]; then
 else
   argocd app create ${APP}-${BRANCH} \
     --project devops \
-    --repo https://github.com/${git_id}/tz-argocd-repo.git \
+    --repo https://github.com/${github_id}/tz-argocd-repo.git \
     --path ${APP}/${BRANCH} \
     --dest-namespace ${PROJ}-${STAGE} \
     --dest-server https://kubernetes.default.svc \

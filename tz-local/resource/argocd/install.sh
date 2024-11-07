@@ -12,8 +12,8 @@ eks_project=$(prop 'project' 'project')
 eks_domain=$(prop 'project' 'domain')
 AWS_REGION=$(prop 'config' 'region')
 admin_password=$(prop 'project' 'admin_password')
-git_id=$(prop 'project' 'git_id')
-git_token=$(prop 'project' 'git_token')
+github_id=$(prop 'project' 'github_id')
+github_token=$(prop 'project' 'github_token')
 basic_password=$(prop 'project' 'basic_password')
 aws_account_id=$(aws sts get-caller-identity --query Account --output text)
 
@@ -66,8 +66,8 @@ k patch deploy/argocd-dex-server -p '{"spec": {"template": {"spec": {"nodeSelect
 k patch deploy/argocd-redis -p '{"spec": {"template": {"spec": {"imagePullSecrets": [{"name": "registry-creds"}]}}}}' -n argocd
 
 argocd login `k get service -n argocd | grep argocd-server | awk '{print $4}' | head -n 1` --username admin --password ${admin_password} --insecure
-argocd repo add https://github.com/${git_id}/tz-argocd-repo \
-  --username ${git_id} --password ${git_token}
+argocd repo add https://github.com/${github_id}/tz-argocd-repo \
+  --username ${github_id} --password ${github_token}
 
 bash /topzone/tz-local/resource/argocd/update.sh
 bash /topzone/tz-local/resource/argocd/update.sh
