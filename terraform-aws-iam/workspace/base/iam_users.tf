@@ -20,6 +20,7 @@ output "access_key_devops" {
 }
 output "password_devops" {
   value = aws_iam_user_login_profile.login_profile_devops.password
+  sensitive = true
 }
 
 // terraform output -json | jq -r .access_key_id_devops.value
