@@ -190,6 +190,8 @@ if [[ "$(aws eks describe-cluster --name ${eks_project} | grep ${eks_project})" 
   fi
 fi
 
+aws ecr delete-repository --repository-name tz-devops-admin --force --region ${AWS_DEFAULT_REGION}
+
 echo "
 ##[ Summary ]##########################################################
 echo "You might need to delete these resources."
