@@ -78,7 +78,7 @@ kubectl -n jenkins create secret generic aws-secret \
 # jenkins-plugin-cli --list
 #jenkins-plugin-cli --plugin-file /tmp/plugin.txt --plugins delivery-pipeline-plugin:1.3.2 deployit-plugin
 
-aws ecr create-repository --repository-name tz-devops-admin --region ${AWS_REGION}
+#aws ecr create-repository --repository-name tz-devops-admin --region ${AWS_REGION}
 #aws ecr delete-repository --repository-name tz-devops-admin --force --region ${AWS_REGION}
 
 echo "

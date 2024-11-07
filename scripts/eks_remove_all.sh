@@ -191,6 +191,7 @@ if [[ "$(aws eks describe-cluster --name ${eks_project} | grep ${eks_project})" 
 fi
 
 aws ecr delete-repository --repository-name tz-devops-admin --force --region ${AWS_DEFAULT_REGION}
+aws iam delete-policy --policy-arn arn:aws:iam::${aws_account_id}:policy/${eks_project}-cert-manager-polic
 
 echo "
 ##[ Summary ]##########################################################
