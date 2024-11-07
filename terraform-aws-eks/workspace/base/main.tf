@@ -33,7 +33,7 @@ module "eks" {
   version = "~> 20.0"
 
   cluster_name                    = local.name
-  cluster_version                 = "1.29"
+  cluster_version                 = "1.31"
   cluster_endpoint_private_access = true
   cluster_endpoint_public_access  = true
   create_cloudwatch_log_group     = false
@@ -172,11 +172,14 @@ module "eks" {
 //        aws_security_group.worker_group_devops.id
 //      ]
 //    }
+
   }
 
   cluster_identity_providers = {
     sts = {
       client_id = "sts.amazonaws.com"
+      // aws eks describe-cluster --name topzone-k8s --region ap-northeast-2 --query "cluster.identity.oidc.issuer" --output text
+      //issuer_url = "https://oidc.eks.ap-northeast-2.amazonaws.com/id/031F964A4004E0A47CFC6C371C356CA3"
     }
   }
 

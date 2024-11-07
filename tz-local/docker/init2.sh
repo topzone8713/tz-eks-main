@@ -37,6 +37,9 @@ if [ ! -d "${PROJECT_BASE2}/.terraform" ]; then
   terraform init
   terraform plan -var-file=".auto.tfvars"
   terraform apply -var-file=".auto.tfvars" -auto-approve
+  if [[ $? != 0 ]]; then
+    exit 1
+  fi
   #terraform destroy -auto-approve
 fi
 
@@ -65,6 +68,9 @@ if [ ! -d "${PROJECT_BASE}/.terraform" ]; then
   terraform init
   terraform plan -var-file=".auto.tfvars"
   terraform apply -var-file=".auto.tfvars" -auto-approve
+  if [[ $? != 0 ]]; then
+    exit 1
+  fi
 
   terraform output kubeconfig | head -n -1 | tail -n +2 > kubeconfig_${eks_project}
 
