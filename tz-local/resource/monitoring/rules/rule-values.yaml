@@ -32,8 +32,6 @@ prometheus:
           module: [http_2xx]
         static_configs:
 #            - https://devops-demo.devops-dev.eks_project.eks_domain
-#            - https://avatar-creation.eks_domain/server/api/v1/healthcheck
-#            - https://avatar-creation.eks_domain/ai/healthcheck
           - targets:
             - https://jenkins.default.eks_project.eks_domain
             - https://argocd.default.eks_project.eks_domain
@@ -42,43 +40,9 @@ prometheus:
             - https://alertmanager.default.eks_project.eks_domain
             - https://vault.default.eks_project.eks_domain
             - https://consul.default.eks_project.eks_domain
-            - https://sonarqube.default.eks_project.eks_domain
 #            - https://kiali.istio-system.eks_project.eks_domain
 #            - https://jaeger.istio-system.eks_project.eks_domain
-            - https://kibana.elk.eks_project.eks_domain
-
-            - https://www.the-dive.io
-            - https://api.the-dive.io/service/healthcheck
-            - https://api.the-dive.io/account/healthcheck
-            - https://api.the-dive.io/admin/healthcheck
-            - https://api.the-dive.io/static/version
-            - https://stg.the-dive.io/service/healthcheck
-            - https://stg.the-dive.io/account/healthcheck
-            - https://stg.the-dive.io/admin/healthcheck
-            - https://stg.the-dive.io/static/version
-
-            - https://www.stepearth.io
-            - https://www.stepus.io
-
-            - https://hypen.ai
-            - https://api.hypen.ai
-            - https://sky.hypen.ai
-            - https://www.hypen.ai
-            - https://api.hypen.ai/healthcheck
-            - https://studyfront.co.kr
-            - https://api.studyfront.co.kr
-            - https://sky.studyfront.co.kr
-            - https://www.studyfront.co.kr
-            - https://api.studyfront.co.kr/healthcheck
-
-            - https://mirrortown.io
-            - https://cms.mirrortown.io
-            - https://poi.mirrortown.io
-            - https://www.mirrortown.io
-            - https://console.mirrortown.io
-
-            - https://www.eks_domain
-            - https://eks_domain
+            - https://devops-demo-app.devops-dev.eks_project.eks_domain
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
