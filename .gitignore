@@ -32,3 +32,11 @@ unseal2.txt
 myoutput.txt
 cert
 *.zip
+.DS_Store
+*.hcl
+lb2.tf
+topzone-k8s
+topzone-k8s.pub
+kubeconfig_topzone-k8s
+.auto.tfvars
+graph.pdf

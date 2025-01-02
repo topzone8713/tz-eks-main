@@ -6,12 +6,17 @@ provider "aws" {
 # EKS Module
 ################################################################################
 
+#  terraform import aws_eks_identity_provider_config.eks_provider_config topzone-k8s:sts
 # resource "aws_eks_identity_provider_config" "eks_provider_config" {
-#   cluster_name = local.name
+#   cluster_name = "topzone-k8s" # local.name
 #   oidc {
 #     client_id                     = "sts.amazonaws.com"
 #     identity_provider_config_name = "sts"
 #     issuer_url                    = module.eks.cluster_oidc_issuer_url
+#   }
+#   tags = {
+#     "application" = "topzone-k8s"
+#     "environment" = "prod"
 #   }
 # }
 
@@ -25,9 +30,10 @@ provider "aws" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
+  version = "~> 20.0"
 
   cluster_name                    = local.name
-  cluster_version                 = "1.29"
+  cluster_version                 = "1.30" # 31
   cluster_endpoint_private_access = true
   cluster_endpoint_public_access  = true
   create_cloudwatch_log_group     = false
@@ -166,11 +172,14 @@ module "eks" {
 //        aws_security_group.worker_group_devops.id
 //      ]
 //    }
+
   }
 
   cluster_identity_providers = {
     sts = {
       client_id = "sts.amazonaws.com"
+      // aws eks describe-cluster --name topzone-k8s --region ap-northeast-2 --query "cluster.identity.oidc.issuer" --output text
+      issuer_url = "https://oidc.eks.ap-northeast-2.amazonaws.com/id/1907C9BCD0E80760BB636DAC6383031A"
     }
   }
 

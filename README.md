@@ -10,7 +10,7 @@
     sudo chown -Rf ubuntu:ubuntu /var/run/docker.sock
 
     -. checkout codes
-       git clone https://dooheehong@github.com/topzone8713/tz-eks-main.git
+       git clone https://dooheehong@github.com/doohee323/tz-eks-main.git
        cd tz-eks-main && git checkout -b devops origin/topzone-k8s
 
     -. copy resources like this,
@@ -56,12 +56,12 @@
         argocd_id=admin
         admin_password=DevOps!323
         basic_password=Soqn!323
-        github_id=topzone8713
+        github_id=doohee323
         github_token=xxxxxx
         argocd_google_client_id=xxxxxx
         argocd_google_client_secret=xxxxxx
         docker_url=index.docker.io
-        dockerhub_id=topzone8713
+        dockerhub_id=doohee323
         dockerhub_password=xxxxxx
       
 ```
@@ -69,7 +69,7 @@
 ## Run Provisioning)
 ```
     -. run.
-        export docker_user="topzone8713"
+        export docker_user="doohee323"
         bash bootstrap.sh
         
     -. output
@@ -137,7 +137,7 @@
 ## Destroy
 ``` 
     -. remove all
-        export docker_user="topzone8713"
+        export docker_user="doohee323"
         bash bootstrap.sh remove
         
     -. remove VPC remainders
