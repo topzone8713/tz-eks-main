@@ -25,7 +25,7 @@ docker login -u="${dockerhub_id}" -p="${dockerhub_password}" ${docker_url}
 sleep 2
 
 cat ~/.docker/config.json
-#{"auths":{"https://index.docker.io/v1/":{"username":"devops","password":"devops!323","email":"doohee323@gmail.com","auth":"ZGV2b3BzOmRldm9wcyEzMjM="}}}
+#{"auths":{"https://index.docker.io/v1/":{"username":"devops","password":"devops!323","email":"topzone8713@gmail.com","auth":"ZGV2b3BzOmRldm9wcyEzMjM="}}}
 mkdir -p /home/topzone/.docker
 cp -Rf ~/.docker/config.json /home/topzone/.docker/config.json
 chown -Rf topzone:topzone /home/topzone/.docker

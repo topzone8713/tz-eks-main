@@ -23,7 +23,7 @@
         https://github.com/settings/tokens
       2. http://jenkins.default.topzone-k8s.topzone.me/credentials/store/system/domain/_/newCredentials
         Kind: Username with password
-        Username: ex) doohee323@gmail.com
+        Username: ex) topzone8713@gmail.com
         Password: ex) xxxxxxxxxxxxxxxxxxxxxxxxx
         ID: github-token
 
@@ -54,7 +54,7 @@
     - E-mail
         SMTP Server: smtp.gmail.com
         Use SMTP Authentication
-        Username: doohee323@gmail.com
+        Username: topzone8713@gmail.com
         Password: xxxxx  => Google "App password"
         Use SSL: false
         Use TLS: yes
@@ -74,7 +74,7 @@
 ## build a demo app
 ###################################################
 
-github fork: https://github.com/doohee323/tz-devops-admin.git
+github fork: https://github.com/topzone8713/tz-devops-admin.git
 https://github.com/aaaaa/tz-devops-admin.git
 
 new project
@@ -89,10 +89,10 @@ Script Path: k8s/Jenkinsfile
 tz-devops-admin/k8s/Jenkinsfile
 
     environment {
-        GITHUP_ID = "doohee323"               =>
+        GITHUP_ID = "topzone8713"               =>
         GIT_URL = "https://github.com/${GITHUP_ID}/tz-devops-admin.git"
         GIT_BRANCH = "devops"                   =>
-        GIT_COMMITTER_EMAIL = "doohee323@gmail.com"   =>
+        GIT_COMMITTER_EMAIL = "topzone8713@gmail.com"   =>
 
         // AWS and Kubernetes Configuration
         ACCOUNT_ID = "596627550572"             =>

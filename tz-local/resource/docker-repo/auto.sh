@@ -14,7 +14,7 @@ kubectl apply -f https://raw.githubusercontent.com/alexellis/registry-creds/mast
 
 export DOCKER_USERNAME=$dockerhub_id
 export PW=$dockerhub_password
-export EMAIL=doohee323@gmail.com
+export EMAIL=topzone8713@gmail.com
 
 kubectl delete secret registry-creds -n kube-system
 kubectl create secret docker-registry registry-creds \

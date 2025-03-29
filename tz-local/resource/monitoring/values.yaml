@@ -109,7 +109,7 @@ alertmanager:
 #        text: '{{ template "slack.default.text" . }}'
 #      email_configs:
 #      - send_resolved: true
-#        to: doohee323@gmail.com
+#        to: topzone8713@gmail.com
     templates:
     - /etc/alertmanager/config/*.tmpl
   service:

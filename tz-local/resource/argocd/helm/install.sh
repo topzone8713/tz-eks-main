@@ -91,8 +91,8 @@ k apply -f ingress-argocd.yaml_bak -n argocd
 #k patch deploy/argocd-redis -p '{"spec": {"template": {"spec": {"imagePullSecrets": [{"name": "registry-creds"}]}}}}' -n argocd
 
 argocd login `k get service -n argocd | grep argocd-server | awk '{print $4}' | head -n 1` --username admin --password ${admin_password} --insecure
-argocd repo add https://github.com/doohee323/tz-argocd-repo \
-  --username doohee323 --password ${github_token}
+argocd repo add https://github.com/topzone8713/tz-argocd-repo \
+  --username topzone8713 --password ${github_token}
 
 sleep 120
 kubectl config get-contexts
@@ -185,7 +185,7 @@ argocd app list
 argocd app delete devops-tz-demo-app -y
 argocd app create devops-tz-demo-app \
     --project devops \
-    --repo https://github.com/doohee323/tz-argocd-repo.git \
+    --repo https://github.com/topzone8713/tz-argocd-repo.git \
     --path devops-tz-demo-app/prod --dest-namespace devops \
     --dest-server https://kubernetes.default.svc \
     --directory-recurse --upsert --grpc-web --sync-policy automated

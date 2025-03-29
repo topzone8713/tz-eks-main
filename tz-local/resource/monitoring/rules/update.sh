@@ -35,7 +35,7 @@ kubectl rollout restart statefulset.apps/alertmanager-prometheus-kube-prometheus
 #kubectl rollout restart deployment/prometheus-kube-state-metrics -n ${NS}
 #kubectl rollout restart statefulset.apps/loki -n ${NS}
 
-sleep 120
+sleep 60
 
 PROJECTS=(KubeSchedulerDown KubeletTooManyPods TargetDown Watchdog InfoInhibitor KubePodNotReady AlertmanagerClusterFailedToSendAlerts AlertmanagerFailedToSendAlerts KubeDaemonSetRolloutStuck)
 for item in "${PROJECTS[@]}"; do

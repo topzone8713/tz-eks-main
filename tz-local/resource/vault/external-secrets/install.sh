@@ -49,7 +49,7 @@ for item in "${PROJECTS[@]}"; do
       namespace=${project}
     else
       project=${item}-prod
-      project_stg=${item}-stg
+      project_stg=${item}-qa
       STAGING="prod"
       namespace=${item}
     fi
