@@ -30,13 +30,13 @@ provider "aws" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.0"
+  version = "~> 21.0"
 
-  cluster_name                    = local.name
-  cluster_version                 = "1.29" # 31
-  cluster_endpoint_private_access = true
-  cluster_endpoint_public_access  = true
-  create_cloudwatch_log_group     = false
+  name                    = local.name
+  kubernetes_version      = "1.29"
+  endpoint_private_access = true
+  endpoint_public_access  = true
+  create_cloudwatch_log_group = false
 
   authentication_mode             = "API_AND_CONFIG_MAP"
 
@@ -49,22 +49,22 @@ module "eks" {
 #   ]
 #
 
-  cluster_addons = {
+  addons = {
     coredns = {
-      resolve_conflicts = "OVERWRITE"
+      most_recent = true
+      resolve_conflicts_on_update = "OVERWRITE"
     }
-    eks-pod-identity-agent = {}
-    kube-proxy = {}
+    eks-pod-identity-agent = { most_recent = true }
+    kube-proxy = { most_recent = true }
     vpc-cni = {
-      resolve_conflicts = "OVERWRITE"
+      most_recent = true
+      resolve_conflicts_on_update = "OVERWRITE"
     }
   }
 
   create_kms_key = true
-  cluster_encryption_config = {
-    "resources": [
-      "secrets"
-    ]
+  encryption_config = {
+    resources = ["secrets"]
   }
   kms_key_deletion_window_in_days = 7
   enable_kms_key_rotation         = true
@@ -73,7 +73,7 @@ module "eks" {
   subnet_ids               = module.vpc.private_subnets
   control_plane_subnet_ids = module.vpc.intra_subnets
 
-  cluster_security_group_additional_rules = {
+  security_group_additional_rules = {
     egress_nodes_ephemeral_ports_tcp = {
       description                = "To node 1025-65535"
       protocol                   = "tcp"
@@ -84,38 +84,6 @@ module "eks" {
     }
   }
 
-  eks_managed_node_group_defaults = {
-    ami_type       = "AL2_x86_64"
-    instance_types = [local.instance_type]
-
-    attach_cluster_primary_security_group = false
-    vpc_security_group_ids                = [aws_security_group.all_worker_mgmt.id]
-    # Force gp3 & encryption (https://github.com/bottlerocket-os/bottlerocket#default-volumes)
-    block_device_mappings = {
-      xvda = {
-        device_name = "/dev/xvda"
-        ebs         = {
-          volume_size           = 50
-          volume_type           = "gp3"
-          iops                  = 3000
-          throughput            = 150
-          encrypted             = true
-          delete_on_termination = true
-        }
-      }
-//      xvdb = {
-//        device_name = "/dev/xvdb"
-//        ebs         = {
-//          volume_size           = 50
-//          volume_type           = "gp3"
-//          iops                  = 3000
-//          throughput            = 150
-//          encrypted             = true
-//          delete_on_termination = true
-//        }
-//      }
-    }
-  }
 
   enable_cluster_creator_admin_permissions = true
 
@@ -175,13 +143,6 @@ module "eks" {
 
   }
 
-  cluster_identity_providers = {
-    sts = {
-      client_id = "sts.amazonaws.com"
-      // aws eks describe-cluster --name topzone-k8s --region ap-northeast-2 --query "cluster.identity.oidc.issuer" --output text
-      //issuer_url = "https://oidc.eks.ap-northeast-2.amazonaws.com/id/031F964A4004E0A47CFC6C371C356CA3"
-    }
-  }
 
   tags = local.tags
 }
@@ -191,12 +152,14 @@ module "eks" {
 ################################################################################
 module "disabled_eks" {
   source  = "terraform-aws-modules/eks/aws"
+  version = "~> 21.0"
 
   create = false
 }
 
 module "disabled_eks_managed_node_group" {
   source = "terraform-aws-modules/eks/aws//modules/eks-managed-node-group"
+  version = "~> 21.0"
 
   create = false
 }

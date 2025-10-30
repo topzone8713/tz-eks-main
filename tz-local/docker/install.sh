@@ -42,7 +42,7 @@ sed -ie "s|\${aws_account_id}|${aws_account_id}|g" docker-compose.yml_bak
 docker-compose -f docker-compose.yml_bak build
 docker-compose -f docker-compose.yml_bak up -d
 #docker-compose -f docker-compose.yml_bak down
-sleep 10
+sleep 20
 echo docker exec -it `docker ps | grep docker-${tz_project} | awk '{print $1}'` bash /topzone/tz-local/docker/init2.sh
 docker exec -it `docker ps | grep docker-${tz_project} | awk '{print $1}'` bash /topzone/tz-local/docker/init2.sh
 #docker exec -it `docker ps | grep docker-${tz_project} | awk '{print $1}'` bash

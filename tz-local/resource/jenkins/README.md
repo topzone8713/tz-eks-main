@@ -95,7 +95,7 @@ tz-devops-admin/k8s/Jenkinsfile
         GIT_COMMITTER_EMAIL = "topzone8713@gmail.com"   =>
 
         // AWS and Kubernetes Configuration
-        ACCOUNT_ID = "596627550572"             =>
+        ACCOUNT_ID = "084828581538"             =>
         AWS_DEFAULT_REGION = "ap-northeast-2"
         DOMAIN = "topzone.me"                   =>
         CLUSTER_NAME = "topzone-k8s"
