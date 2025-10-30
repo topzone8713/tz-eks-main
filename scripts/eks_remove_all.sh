@@ -7,7 +7,6 @@
 
 PROJECT_BASE='/topzone/terraform-aws-eks/workspace/base'
 PROJECT_BASE2='/topzone/terraform-aws-iam/workspace/base'
-cd ${PROJECT_BASE}
 
 function cleanTfFiles() {
   rm -Rf kubeconfig_*
@@ -52,6 +51,11 @@ if [[ "${AWS_DEFAULT_REGION}" == "" || "${eks_project}" == "" ]]; then
   echo "AWS_DEFAULT_REGION or eks_project is null"
   exit 1
 fi
+
+cd ${PROJECT_BASE2}
+terraform destroy -auto-approve
+
+cd ${PROJECT_BASE}
 
 for item in $(eksctl get nodegroup --cluster=${eks_project} | grep ${eks_project} | awk '{print $2}'); do
 	eksctl delete nodegroup --cluster=${eks_project} --name=${item} --disable-eviction
@@ -201,9 +205,6 @@ echo "ECR: ${ECR_REPO}"
 #######################################################################
 " >> /topzone/info
 cat /topzone/info
-
-cd ${PROJECT_BASE2}
-terraform destroy -auto-approve
 
 # bash /topzone/scripts/eks_remove_all.sh cleanTfFiles
 
