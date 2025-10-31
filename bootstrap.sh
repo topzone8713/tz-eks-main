@@ -1,65 +1,79 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# export docker_user="topzone8713"
-# bash bootstrap.sh
+set -euo pipefail
+
+# Optional: export docker_user="topzone8713"
+# Usage:
+#   bash bootstrap.sh           # start or update local tooling container
+#   bash bootstrap.sh sh        # open a shell inside the container
+#   bash bootstrap.sh remove    # tear down infrastructure and clean state
 
 export MSYS_NO_PATHCONV=1
-export tz_project=devops-utils
+: "${tz_project:=devops-utils}"
 
-function cleanTfFiles() {
-  rm -Rf kubeconfig_*
-  rm -Rf .terraform
-  rm -Rf terraform.tfstate
-  rm -Rf terraform.tfstate.backup
-  rm -Rf .terraform.lock.hcl
-  rm -Rf s3_bucket_id
-  rm -Rf ./config_*
-  rm -Rf ./terraform-aws-eks/workspace/base/lb2.tf
-  rm -Rf ./terraform-aws-eks/workspace/base/.terraform
+clean_tf_files() {
+  rm -rf kubeconfig_* \
+         .terraform \
+         terraform.tfstate \
+         terraform.tfstate.backup \
+         .terraform.lock.hcl \
+         s3_bucket_id \
+         ./config_* \
+         ./terraform-aws-eks/workspace/base/lb2.tf \
+         ./terraform-aws-eks/workspace/base/.terraform
 }
 
-DOCKER_NAME=`docker ps | grep docker-${tz_project} | awk '{print $1}'`
-echo "======= DOCKER_NAME: ${DOCKER_NAME}"
+container_id() {
+  docker ps | grep "docker-${tz_project}" | awk '{print $1}'
+}
 
-if [[ ${DOCKER_NAME} == "" && "$1" == "remove" ]]; then
-  pushd `pwd`
-  cd terraform-aws-eks/workspace/base
-  cleanTfFiles
-  popd
-  cd terraform-aws-iam/workspace/base
-  cleanTfFiles
-  exit 0
-fi
-
-# bash bootstrap.sh remove
-if [[ "$1" == "remove" ]]; then
-  docker exec -it ${DOCKER_NAME} bash /topzone/scripts/eks_remove_all.sh
-  if [[ $? != 0 ]]; then
-    echo "failed to remove resources!"
+open_shell() {
+  local id
+  id=$(container_id)
+  if [[ -z "${id}" ]]; then
+    echo "[ERROR] No running container found for docker-${tz_project}." >&2
     exit 1
   fi
-  docker exec -it ${DOCKER_NAME} bash /topzone/scripts/eks_remove_all.sh cleanTfFiles
-  exit 0
-fi
+  docker exec -it "${id}" bash
+}
 
-if [[ "$1" == "sh" ]]; then
-  docker exec -it `docker ps | grep docker-${tz_project} | awk '{print $1}'` bash
-  exit 0
-fi
+remove_stack() {
+  local id
+  id=$(container_id)
 
-# bash bootstrap.sh
-#docker exec -it ${DOCKER_NAME} bash
-bash tz-local/docker/install.sh
- 
-exit 0
+  if [[ -z "${id}" ]]; then
+    pushd terraform-aws-eks/workspace/base >/dev/null
+    clean_tf_files
+    popd >/dev/null
 
-# install in docker
-export docker_user="topzone8713"
-bash /topzone/tz-local/docker/init2.sh
+    pushd terraform-aws-iam/workspace/base >/dev/null
+    clean_tf_files
+    popd >/dev/null
+    return
+  fi
 
-# remove all resources
-docker exec -it ${DOCKER_NAME} bash
-bash /topzone/scripts/eks_remove_all.sh
-bash /topzone/scripts/eks_remove_all.sh cleanTfFiles
+  docker exec -it "${id}" bash /topzone/scripts/eks_remove_all.sh
+  if [[ $? -ne 0 ]]; then
+    echo "[ERROR] Failed to remove resources." >&2
+    exit 1
+  fi
 
-#docker container stop $(docker container ls -a -q) && docker system prune -a -f --volumes
+  docker exec -it "${id}" bash /topzone/scripts/eks_remove_all.sh cleanTfFiles
+}
+
+case "${1:-up}" in
+  remove)
+    remove_stack
+    ;;
+  sh)
+    open_shell
+    ;;
+  up)
+    bash tz-local/docker/install.sh
+    ;;
+  *)
+    echo "[ERROR] Unknown command: ${1}" >&2
+    echo "Usage: bash bootstrap.sh [up|sh|remove]" >&2
+    exit 1
+    ;;
+ esac
