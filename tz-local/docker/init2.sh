@@ -2,7 +2,7 @@
 
 # base
 # base2
-# eks_project=topzone-eks7
+# eks_project=topzone-eks
 # terraform init -upgrade -reconfigure
 # terraform plan -var-file=".auto.tfvars"
 # terraform apply -var-file=".auto.tfvars" -auto-approve
