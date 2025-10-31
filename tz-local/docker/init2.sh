@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# base
+# base2
+# eks_project=topzone-eks7
+# terraform init -upgrade -reconfigure
+# terraform plan -var-file=".auto.tfvars"
+# terraform apply -var-file=".auto.tfvars" -auto-approve
+
 function prop { key="${2}=" file="/root/.aws/${1}" rslt=$(grep "${3:-}" "$file" -A 10 | grep "$key" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'); [[ -z "$rslt" ]] && key="${2} = " && rslt=$(grep "${3:-}" "$file" -A 10 | grep "$key" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'); echo "$rslt"; }
 
 export KUBE_CONFIG_PATH=/root/.kube/config
