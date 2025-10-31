@@ -29,6 +29,7 @@ users:
 %{ for i in aws_authenticator_additional_args }
         - ${i}
 %{~ endfor ~}
+      interactiveMode: Never
 %{ if length(aws_authenticator_env_variables) > 0 }
       env:
   %{~ for k, v in aws_authenticator_env_variables ~}

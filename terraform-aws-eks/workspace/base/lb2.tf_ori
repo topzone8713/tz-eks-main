@@ -75,12 +75,20 @@ resource "kubernetes_config_map_v1_data" "aws_auth" {
 # }
 
 module "iam_assumable_role_admin" {
-  source                        = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
-  create_role                   = true
-  role_name                     = "cluster-autoscaler-${local.cluster_name}"
-  provider_url                  = replace(module.eks.cluster_oidc_issuer_url, "https://", "")
-  role_policy_arns              = [aws_iam_policy.cluster_autoscaler.arn]
-  oidc_fully_qualified_subjects = ["system:serviceaccount:${local.k8s_service_account_namespace}:${local.k8s_service_account_name}"]
+  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+
+  name = "cluster-autoscaler-${local.cluster_name}"
+
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["${local.k8s_service_account_namespace}:${local.k8s_service_account_name}"]
+    }
+  }
+
+  policies = {
+    cluster-autoscaler = aws_iam_policy.cluster_autoscaler.arn
+  }
 }
 
 resource "aws_iam_policy" "cluster_autoscaler" {
@@ -134,10 +142,15 @@ data "aws_iam_policy_document" "cluster_autoscaler" {
 data "aws_region" "current" {}
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     host                   = data.aws_eks_cluster.cluster.endpoint
     cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.cluster.token
+
+    exec = {
+      api_version = "client.authentication.k8s.io/v1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", local.cluster_name]
+    }
   }
 }
 
@@ -153,31 +166,33 @@ resource "helm_release" "cluster-autoscaler" {
   version          = "9.43.0"
   create_namespace = true
 
-  set {
-    name  = "awsRegion"
-    value = data.aws_region.current.name
-  }
-  set {
-    name  = "rbac.serviceAccount.name"
-    value = local.k8s_service_account_name
-  }
-  set {
-    name  = "rbac.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = module.iam_assumable_role_admin.iam_role_arn
-    type  = "string"
-  }
-  set {
-    name  = "autoDiscovery.clusterName"
-    value = local.cluster_name
-  }
-  set {
-    name  = "autoDiscovery.enabled"
-    value = "true"
-  }
-  set {
-    name  = "rbac.create"
-    value = "true"
-  }
+  set = [
+    {
+      name  = "awsRegion"
+      value = data.aws_region.current.id
+    },
+    {
+      name  = "rbac.serviceAccount.name"
+      value = local.k8s_service_account_name
+    },
+    {
+      name  = "rbac.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+      value = module.iam_assumable_role_admin.arn
+      type  = "string"
+    },
+    {
+      name  = "autoDiscovery.clusterName"
+      value = local.cluster_name
+    },
+    {
+      name  = "autoDiscovery.enabled"
+      value = "true"
+    },
+    {
+      name  = "rbac.create"
+      value = "true"
+    }
+  ]
 }
 
 
@@ -187,7 +202,7 @@ locals {
   alb_controller_chart_version = "1.4.5"
   aws_alb_ingress_class        = "alb"
   aws_vpc_id                   = data.aws_vpc.selected.id
-  aws_region_name              = data.aws_region.current.name
+  aws_region_name              = data.aws_region.current.id
   aws_iam_path_prefix          = null
   target_groups = []
 }

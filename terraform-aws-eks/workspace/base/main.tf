@@ -6,34 +6,13 @@ provider "aws" {
 # EKS Module
 ################################################################################
 
-#  terraform import aws_eks_identity_provider_config.eks_provider_config topzone-k8s:sts
-# resource "aws_eks_identity_provider_config" "eks_provider_config" {
-#   cluster_name = "topzone-k8s" # local.name
-#   oidc {
-#     client_id                     = "sts.amazonaws.com"
-#     identity_provider_config_name = "sts"
-#     issuer_url                    = module.eks.cluster_oidc_issuer_url
-#   }
-#   tags = {
-#     "application" = "topzone-k8s"
-#     "environment" = "prod"
-#   }
-# }
-
-# aws eks describe-identity-provider-config \
-#     --cluster-name topzone-k8s \
-#     --identity-provider-config type=oidc,name="sts"
-
-# aws eks disassociate-identity-provider-config \
-#   --cluster-name topzone-k8s \
-#   --identity-provider-config type=oidc,name="sts"
-
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0"
 
-  name                    = local.name
-  kubernetes_version      = "1.31"
+  name               = local.name
+  kubernetes_version = "1.33"
+
   endpoint_private_access = true
   endpoint_public_access  = true
   create_cloudwatch_log_group = false
@@ -41,19 +20,13 @@ module "eks" {
   authentication_mode = "API_AND_CONFIG_MAP"
 
   addons = {
-    coredns = {
-      most_recent = true
-      resolve_conflicts_on_update = "OVERWRITE"
-    }
+    coredns = {}
     eks-pod-identity-agent = {
-      most_recent = true
+      before_compute = true
     }
-    kube-proxy = {
-      most_recent = true
-    }
+    kube-proxy = {}
     vpc-cni = {
-      most_recent = true
-      resolve_conflicts_on_update = "OVERWRITE"
+      before_compute = true
     }
   }
 
@@ -64,9 +37,8 @@ module "eks" {
   kms_key_deletion_window_in_days = 7
   enable_kms_key_rotation         = true
 
-  vpc_id                   = module.vpc.vpc_id
-  subnet_ids               = module.vpc.private_subnets
-  control_plane_subnet_ids = module.vpc.intra_subnets
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
 
   security_group_additional_rules = {
     egress_nodes_ephemeral_ports_tcp = {
@@ -79,86 +51,14 @@ module "eks" {
     }
   }
 
-
-  # Disable automatic cluster creator permissions - we'll configure it explicitly via access_entries
   enable_cluster_creator_admin_permissions = false
 
-  # Access entries for IAM roles and users
-  # Node groups are automatically handled, but additional roles/users need explicit entries
-  # Using kubernetes_groups for RBAC-based access control
   access_entries = {
-    # Root account - full admin access (explicit configuration)
-    "root-account" = {
-      kubernetes_groups = ["system:masters"]
-      principal_arn    = "arn:aws:iam::${var.account_id}:root"
+    root-account = {
+      principal_arn = "arn:aws:iam::${var.account_id}:root"
       policy_associations = {
         admin = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-    # k8sAdmin role
-    "${local.name}-k8sAdmin" = {
-      kubernetes_groups = ["${local.name}-k8sAdmin"]
-      principal_arn    = "arn:aws:iam::${var.account_id}:role/${local.name}-k8sAdmin"
-      policy_associations = {
-        admin = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-    # k8sDev role
-    "${local.name}-k8sDev" = {
-      kubernetes_groups = ["${local.name}-k8sDev"]
-      principal_arn    = "arn:aws:iam::${var.account_id}:role/${local.name}-k8sDev"
-      policy_associations = {
-        dev = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-    # devops user
-    "devops-user" = {
-      kubernetes_groups = ["system:masters"]
-      principal_arn    = "arn:aws:iam::${var.account_id}:user/devops"
-      policy_associations = {
-        admin = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-    # adminuser
-    "adminuser" = {
-      kubernetes_groups = ["system:masters"]
-      principal_arn    = "arn:aws:iam::${var.account_id}:user/adminuser"
-      policy_associations = {
-        admin = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-    # doohee@topzone.me user
-    "doohee-user" = {
-      kubernetes_groups = ["system:masters", "system:nodes"]
-      principal_arn    = "arn:aws:iam::${var.account_id}:user/doohee@topzone.me"
-      policy_associations = {
-        admin = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
           access_scope = {
             type = "cluster"
           }
@@ -169,20 +69,28 @@ module "eks" {
 
   eks_managed_node_groups = {
     devops = {
-      desired_size = 3
-      min_size     = 3
-      max_size     = 3
       instance_types = [local.instance_type]
       ami_type       = "AL2023_x86_64_STANDARD"
+
+      min_size     = 3
+      max_size     = 3
+      desired_size = 3
+
+      # Note: desired_size is ignored after the initial creation
+      # https://github.com/bryantbiggs/eks-desired-size-hack
+
       subnets = [element(module.vpc.private_subnets, 0)]
       disk_size = 30
+
       labels = {
-        team = "devops"
+        team        = "devops"
         environment = "prod"
       }
+
       update_config = {
         max_unavailable_percentage = 80
       }
+
       vpc_security_group_ids = [
         aws_security_group.worker_group_devops.id
       ]
@@ -206,25 +114,58 @@ module "eks" {
 //      ]
 //    }
 
+      # Optional: Additional nodeadm configuration
+      # Ref https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/
+      # cloudinit_pre_nodeadm = [
+      #   {
+      #     content_type = "application/node.eks.aws"
+      #     content      = <<-EOT
+      #       ---
+      #       apiVersion: node.eks.aws/v1alpha1
+      #       kind: NodeConfig
+      #       spec:
+      #         kubelet:
+      #           config:
+      #             shutdownGracePeriod: 30s
+      #     EOT
+      #   }
+      # ]
+    }
   }
 
   tags = local.tags
 }
 
-################################################################################
-# Disabled creation
-################################################################################
-module "disabled_eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 21.0"
+module "ebs_csi_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  version = "~> 6.0"
 
-  create = false
+  name = "${local.name}-ebs-csi"
+
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
+    }
+  }
+
+  policies = {
+    AmazonEBSCSIDriverPolicy = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+  }
+
+  tags = local.tags
+
+  depends_on = [module.eks]
 }
 
-module "disabled_eks_managed_node_group" {
-  source = "terraform-aws-modules/eks/aws//modules/eks-managed-node-group"
-  version = "~> 21.0"
+resource "aws_eks_addon" "ebs_csi_driver" {
+  cluster_name             = module.eks.cluster_name
+  addon_name               = "aws-ebs-csi-driver"
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+  service_account_role_arn = module.ebs_csi_irsa.arn
 
-  create = false
+  tags = local.tags
+
+  depends_on = [module.ebs_csi_irsa]
 }
-

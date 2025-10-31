@@ -14,28 +14,28 @@ export AWS_SECRET_ACCESS_KEY=$(prop 'credentials' 'aws_secret_access_key')
 
 aws iam delete-policy --policy-arn "arn:aws:iam::${aws_account_id}:policy/AmazonEKS_EBS_CSI_Driver_Policy-${eks_project}"
 aws iam create-policy \
-    --policy-name AmazonEKS_EBS_CSI_Driver_Policy-${eks_project} \
-    --policy-document file://example-iam-policy.json
+  --policy-name AmazonEKS_EBS_CSI_Driver_Policy-${eks_project} \
+  --policy-document file://example-iam-policy.json
 
 eksctl delete iamserviceaccount --name ebs-csi-controller-sa --cluster ${eks_project}
 eksctl create iamserviceaccount \
-    --name ebs-csi-controller-sa \
-    --namespace kube-system \
-    --cluster ${eks_project} \
-    --attach-policy-arn arn:aws:iam::${aws_account_id}:policy/AmazonEKS_EBS_CSI_Driver_Policy-${eks_project} \
-    --approve \
-    --override-existing-serviceaccounts
+  --name ebs-csi-controller-sa \
+  --namespace kube-system \
+  --cluster ${eks_project} \
+  --attach-policy-arn arn:aws:iam::${aws_account_id}:policy/AmazonEKS_EBS_CSI_Driver_Policy-${eks_project} \
+  --approve \
+  --override-existing-serviceaccounts
 
 aws cloudformation describe-stacks \
-    --stack-name eksctl-${eks_project}-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa \
-    --query='Stacks[].Outputs[?OutputKey==`Role1`].OutputValue' \
-    --output text
+  --stack-name eksctl-${eks_project}-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa \
+  --query='Stacks[].Outputs[?OutputKey==`Role1`].OutputValue' \
+  --output text
 
 kubectl -n kube-system delete secret aws-secret
 kubectl create secret generic aws-secret \
-    --namespace kube-system \
-    --from-literal "key_id=${AWS_ACCESS_KEY_ID}" \
-    --from-literal "access_key=${AWS_SECRET_ACCESS_KEY}"
+  --namespace kube-system \
+  --from-literal "key_id=${AWS_ACCESS_KEY_ID}" \
+  --from-literal "access_key=${AWS_SECRET_ACCESS_KEY}"
 
 #kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.34"
 #kubectl delete -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.34"

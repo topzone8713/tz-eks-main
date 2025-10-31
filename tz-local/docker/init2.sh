@@ -38,7 +38,7 @@ if [ ! -d "${PROJECT_BASE2}/.terraform" ]; then
   terraform plan -var-file=".auto.tfvars"
   terraform apply -var-file=".auto.tfvars" -auto-approve
   if [[ $? != 0 ]]; then
-    exit 1
+   exit 1
   fi
   #terraform destroy -auto-approve
 fi
