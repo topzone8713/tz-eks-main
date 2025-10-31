@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# export docker_user="topzone8713"
+# bash bootstrap.sh
+
 export MSYS_NO_PATHCONV=1
 export tz_project=devops-utils
 

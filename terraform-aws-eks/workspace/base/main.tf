@@ -33,21 +33,12 @@ module "eks" {
   version = "~> 21.0"
 
   name                    = local.name
-  kubernetes_version      = "1.29"
+  kubernetes_version      = "1.31"
   endpoint_private_access = true
   endpoint_public_access  = true
   create_cloudwatch_log_group = false
 
-  authentication_mode             = "API_AND_CONFIG_MAP"
-
-#   create_aws_auth_configmap = true
-#   manage_aws_auth_configmap = true
-#   aws_auth_roles = local.aws_auth_roles
-#   aws_auth_users = local.aws_auth_users
-#   aws_auth_accounts = [
-#     var.account_id
-#   ]
-#
+  authentication_mode = "API_AND_CONFIG_MAP"
 
   addons = {
     coredns = {
@@ -85,30 +76,100 @@ module "eks" {
   }
 
 
-  enable_cluster_creator_admin_permissions = true
+  # Disable automatic cluster creator permissions - we'll configure it explicitly via access_entries
+  enable_cluster_creator_admin_permissions = false
 
-#   access_entries = {
-#     example = {
-#       kubernetes_groups = []
-#       principal_arn     = "arn:aws:iam::xxxxxxxxx:role/topzone-k8s-k8sAdmin"
-#       policy_associations = {
-#         example = {
-#           policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
-#           access_scope = {
-#             namespaces = ["default"]
-#             type       = "namespace"
-#           }
-#         }
-#       }
-#     }
-#   }
+  # Access entries for IAM roles and users
+  # Node groups are automatically handled, but additional roles/users need explicit entries
+  # Using kubernetes_groups for RBAC-based access control
+  access_entries = {
+    # Root account - full admin access (explicit configuration)
+    "root-account" = {
+      kubernetes_groups = ["system:masters"]
+      principal_arn    = "arn:aws:iam::${var.account_id}:root"
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+    # k8sAdmin role
+    "${local.name}-k8sAdmin" = {
+      kubernetes_groups = ["${local.name}-k8sAdmin"]
+      principal_arn    = "arn:aws:iam::${var.account_id}:role/${local.name}-k8sAdmin"
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+    # k8sDev role
+    "${local.name}-k8sDev" = {
+      kubernetes_groups = ["${local.name}-k8sDev"]
+      principal_arn    = "arn:aws:iam::${var.account_id}:role/${local.name}-k8sDev"
+      policy_associations = {
+        dev = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+    # devops user
+    "devops-user" = {
+      kubernetes_groups = ["system:masters"]
+      principal_arn    = "arn:aws:iam::${var.account_id}:user/devops"
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+    # adminuser
+    "adminuser" = {
+      kubernetes_groups = ["system:masters"]
+      principal_arn    = "arn:aws:iam::${var.account_id}:user/adminuser"
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+    # doohee@topzone.me user
+    "doohee-user" = {
+      kubernetes_groups = ["system:masters", "system:nodes"]
+      principal_arn    = "arn:aws:iam::${var.account_id}:user/doohee@topzone.me"
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
 
   eks_managed_node_groups = {
     devops = {
-      desired_size = 4
-      min_size     = 4
-      max_size     = 7
+      desired_size = 3
+      min_size     = 3
+      max_size     = 3
       instance_types = [local.instance_type]
+      ami_type       = "AL2023_x86_64_STANDARD"  # Add this line
       subnets = [element(module.vpc.private_subnets, 0)]
       disk_size = 30
       labels = {
@@ -142,7 +203,6 @@ module "eks" {
 //    }
 
   }
-
 
   tags = local.tags
 }

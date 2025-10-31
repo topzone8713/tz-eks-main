@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# export tz_project=devops-utils
 # docker exec -it `docker ps | grep docker-${tz_project} | awk '{print $1}'` bash
 # bash /topzone/scripts/eks_remove_all.sh
 # bash /topzone/scripts/eks_remove_all.sh cleanTfFiles
@@ -25,6 +26,7 @@ function cleanTfFiles() {
 }
 
 if [[ "$1" == "cleanTfFiles" ]]; then
+  cd ${PROJECT_BASE}
   cleanTfFiles
   cd ${PROJECT_BASE2}
   cleanTfFiles
