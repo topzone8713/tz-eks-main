@@ -45,8 +45,12 @@ module "eks" {
       most_recent = true
       resolve_conflicts_on_update = "OVERWRITE"
     }
-    eks-pod-identity-agent = { most_recent = true }
-    kube-proxy = { most_recent = true }
+    eks-pod-identity-agent = {
+      most_recent = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
     vpc-cni = {
       most_recent = true
       resolve_conflicts_on_update = "OVERWRITE"
@@ -169,7 +173,7 @@ module "eks" {
       min_size     = 3
       max_size     = 3
       instance_types = [local.instance_type]
-      ami_type       = "AL2023_x86_64_STANDARD"  # Add this line
+      ami_type       = "AL2023_x86_64_STANDARD"
       subnets = [element(module.vpc.private_subnets, 0)]
       disk_size = 30
       labels = {
@@ -177,7 +181,7 @@ module "eks" {
         environment = "prod"
       }
       update_config = {
-        max_unavailable_percentage = 80 # or set `max_unavailable`
+        max_unavailable_percentage = 80
       }
       vpc_security_group_ids = [
         aws_security_group.worker_group_devops.id
