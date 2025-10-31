@@ -130,7 +130,7 @@ module "eks" {
       #     EOT
       #   }
       # ]
-    }
+    # }
   }
 
   tags = local.tags
@@ -161,11 +161,7 @@ module "ebs_csi_irsa" {
 resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name             = module.eks.cluster_name
   addon_name               = "aws-ebs-csi-driver"
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "OVERWRITE"
   service_account_role_arn = module.ebs_csi_irsa.arn
-
-  tags = local.tags
 
   depends_on = [module.ebs_csi_irsa]
 }
