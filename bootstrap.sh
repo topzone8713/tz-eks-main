@@ -50,7 +50,7 @@ fi
 # bash bootstrap.sh
 #docker exec -it ${DOCKER_NAME} bash
 bash tz-local/docker/install.sh
- 
+
 exit 0
 
 # install in docker
