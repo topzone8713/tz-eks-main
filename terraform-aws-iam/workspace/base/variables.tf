@@ -8,3 +8,15 @@ variable "region" {
 variable "environment" {
   default = "prod"
 }
+
+variable "tzcorp_zone_id" {
+}
+
+variable "VCP_BCLASS" {
+}
+
+variable "instance_type" {
+}
+
+variable "k8s_config_path" {
+}

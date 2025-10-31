@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# base
+# base2
+# eks_project=topzone-eks
+# terraform init -upgrade -reconfigure
+# terraform plan -var-file=".auto.tfvars"
+# terraform apply -var-file=".auto.tfvars" -auto-approve
+
 function prop { key="${2}=" file="/root/.aws/${1}" rslt=$(grep "${3:-}" "$file" -A 10 | grep "$key" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'); [[ -z "$rslt" ]] && key="${2} = " && rslt=$(grep "${3:-}" "$file" -A 10 | grep "$key" | head -n 1 | cut -d '=' -f2 | sed 's/ //g'); echo "$rslt"; }
 
 export KUBE_CONFIG_PATH=/root/.kube/config
@@ -34,11 +41,11 @@ cp -Rf /topzone/resources/.auto.tfvars ${PROJECT_BASE2}
 echo "===== PROJECT_BASE2: ${PROJECT_BASE2}"
 cd ${PROJECT_BASE2}
 if [ ! -d "${PROJECT_BASE2}/.terraform" ]; then
-  terraform init
+  terraform init -upgrade -reconfigure
   terraform plan -var-file=".auto.tfvars"
   terraform apply -var-file=".auto.tfvars" -auto-approve
   if [[ $? != 0 ]]; then
-    exit 1
+   exit 1
   fi
   #terraform destroy -auto-approve
 fi
@@ -65,7 +72,7 @@ if [ ! -d "${PROJECT_BASE}/.terraform" ]; then
   rm -Rf ${PROJECT_BASE}/terraform.tfstate
   rm -Rf ${PROJECT_BASE}/terraform.tfstate.backup
 
-  terraform init
+  terraform init -upgrade -reconfigure
   terraform plan -var-file=".auto.tfvars"
   terraform apply -var-file=".auto.tfvars" -auto-approve
   if [[ $? != 0 ]]; then
@@ -103,7 +110,7 @@ if [ ! -d "${PROJECT_BASE}/.terraform" ]; then
 
   cp -Rf lb2.tf_ori lb2.tf
 
-  terraform init
+  terraform init -upgrade -reconfigure
   terraform plan -var-file=".auto.tfvars"
   terraform apply -var-file=".auto.tfvars" -auto-approve
 

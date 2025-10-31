@@ -20,19 +20,20 @@ users:
 - name: ${kubeconfig_name}
   user:
     exec:
-      apiVersion: client.authentication.k8s.io/v1beta1
+      apiVersion: client.authentication.k8s.io/v1
       command: ${aws_authenticator_command}
       args:
-%{~ for i in aws_authenticator_command_args }
+%{ for i in aws_authenticator_command_args }
         - "${i}"
-%{~ endfor ~}
+%{ endfor }
 %{ for i in aws_authenticator_additional_args }
-        - ${i}
-%{~ endfor ~}
+        - "${i}"
+%{ endfor }
+      interactiveMode: Never
 %{ if length(aws_authenticator_env_variables) > 0 }
       env:
-  %{~ for k, v in aws_authenticator_env_variables ~}
+  %{ for k, v in aws_authenticator_env_variables }
         - name: ${k}
           value: ${v}
-  %{~ endfor ~}
+  %{ endfor }
 %{ endif }

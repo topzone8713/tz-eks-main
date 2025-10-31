@@ -1,10 +1,9 @@
-version: '3.4'
-
 services:
   tz_main:
     image: tz-main
     container_name: docker-${tz_project}
     build: ./
+    platform: linux/amd64
     volumes:
       - ../../:/topzone/
       - /var/run/docker.sock:/var/run/docker.sock

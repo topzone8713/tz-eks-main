@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# export docker_user="topzone8713"
+# bash bootstrap.sh
+
 export MSYS_NO_PATHCONV=1
 export tz_project=devops-utils
 
@@ -47,9 +50,7 @@ fi
 # bash bootstrap.sh
 #docker exec -it ${DOCKER_NAME} bash
 bash tz-local/docker/install.sh
-echo docker exec -it ${DOCKER_NAME} bash /topzone/tz-local/docker/init2.sh
-docker exec -it ${DOCKER_NAME} bash /topzone/tz-local/docker/init2.sh
-
+ 
 exit 0
 
 # install in docker

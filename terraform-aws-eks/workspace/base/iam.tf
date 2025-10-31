@@ -28,18 +28,43 @@ resource "aws_iam_role_policy_attachment" "eks-main-ecr-policy" {
 }
 
 #########################################
-# cert-manager dns-01
+# cert-manager IRSA (direct IAM resources)
 #########################################
-module "cert_manager_irsa" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
-  create_role = true
-  role_name = "cert_manager-${local.cluster_name}"
-  tags = {Role = "cert_manager-${local.cluster_name}-with-oidc"}
-  provider_url  = replace(module.eks.cluster_oidc_issuer_url, "https://", "")
-  role_policy_arns = [aws_iam_policy.cert_manager_policy.arn]
-  oidc_fully_qualified_subjects = [
-    "system:serviceaccount:${local.k8s_service_account_namespace}:${local.k8s_service_account_name}"
-  ]
+
+data "aws_iam_policy_document" "cert_manager_irsa_trust" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:sub"
+      values   = [
+        "system:serviceaccount:${local.k8s_service_account_namespace}:${local.k8s_service_account_name}"
+      ]
+    }
+  }
+}
+
+resource "aws_iam_role" "cert_manager_irsa" {
+  name               = "cert_manager-${local.cluster_name}"
+  assume_role_policy = data.aws_iam_policy_document.cert_manager_irsa_trust.json
+  tags               = { Role = "cert_manager-${local.cluster_name}-irsa" }
+}
+
+resource "aws_iam_role_policy_attachment" "cert_manager_irsa_attach" {
+  role       = aws_iam_role.cert_manager_irsa.name
+  policy_arn = aws_iam_policy.cert_manager_policy.arn
 }
 
 resource "aws_iam_policy" "cert_manager_policy" {

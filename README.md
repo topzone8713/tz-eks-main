@@ -22,7 +22,7 @@
     
     - ex)
     - .auto.tfvars
-        account_id = "596627550572"         # AWS account
+        account_id = "084828581538"         # AWS account
         tzcorp_zone_id = "Z0041899D9V07I4RJKFD"   # domain to use
         cluster_name = "topzone-k8s"        
         region = "ap-northeast-2"           
